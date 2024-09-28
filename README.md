@@ -1,28 +1,28 @@
 # Intel 8080 Emulator 🚀
 
-Este projeto é um **emulador do processador Intel 8080**, com o objetivo final de rodar o clássico jogo **Space Invaders** 👾. O Intel 8080 foi um processador de 8 bits lançado em 1974, amplamente utilizado em sistemas embarcados e em arcades, como no Space Invaders.
+This project is an **Intel 8080 processor emulator**, with the ultimate goal of running the classic game **Space Invaders** 👾. The Intel 8080 was an 8-bit processor released in 1974, widely used in embedded systems and arcades, such as in Space Invaders.
 
-## 🎯 Objetivo
+## 🎯 Objective
 
-Desenvolver um emulador que simule o comportamento do processador Intel 8080, permitindo a execução do jogo Space Invaders em hardware moderno. O projeto tem como foco a fidelidade à arquitetura original, garantindo que todas as instruções e o comportamento do sistema sejam corretamente emulados.
+To develop an emulator that simulates the behavior of the Intel 8080 processor, allowing the execution of the Space Invaders game on modern hardware. The project focuses on fidelity to the original architecture, ensuring that all instructions and system behavior are correctly emulated.
 
-## 🔧 Funcionalidades
+## 🔧 Features
 
-- Emulação completa do conjunto de instruções do processador Intel 8080.
-- Implementação de um sistema de memória para leitura e escrita.
-- Suporte a interrupções e periféricos do hardware original.
-- Capacidade de carregar e executar o código binário do jogo Space Invaders.
-- Tela de renderização e suporte básico para gráficos e som.
+- Complete emulation of the Intel 8080 processor instruction set.
+- Implementation of a memory system for reading and writing.
+- Support for interrupts and peripherals from the original hardware.
+- Ability to load and execute the binary code of the Space Invaders game.
+- Rendering screen and basic support for graphics and sound.
 
-## 🏗️ Como Funciona
+## 🏗️ How It Works
 
-O emulador lê o código binário do jogo Space Invaders e simula a execução de cada instrução do processador 8080. Ele também simula as interrupções e os periféricos necessários para a execução correta do jogo, como a tela e o controle de entrada.
+The emulator reads the binary code of the Space Invaders game and simulates the execution of each instruction of the 8080 processor. It also simulates the interrupts and peripherals needed for the proper execution of the game, such as the screen and input control.
 
-### ⚙️ Arquitetura do Intel 8080
+### ⚙️ Intel 8080 Architecture
 
-O Intel 8080 é um processador de 8 bits com 7 registradores de 8 bits, um apontador de pilha e um contador de programa. Este emulador implementa:
+The Intel 8080 is an 8-bit processor with 7 eight-bit registers, a stack pointer, and a program counter. This emulator implements:
 
-- **Conjunto de instruções**: Todas as 256 instruções do 8080, incluindo movimentação de dados, operações lógicas, aritméticas, saltos, chamadas e retornos.
-- **Sistema de memória**: Simulação da RAM para suportar o jogo e o espaço de código.
-- **Interrupções**: Implementação das interrupções necessárias para o jogo Space Invaders.
+- **Instruction set**: All 256 instructions of the 8080, including data movement, logical and arithmetic operations, jumps, calls, and returns.
+- **Memory system**: Simulation of RAM to support the game and code space.
+- **Interrupts**: Implementation of the necessary interrupts for the Space Invaders game.
 
