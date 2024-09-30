@@ -161,7 +161,19 @@ int Emulate8080Op(State8080 *state){
             state->l = opcode[1]; 
             state->pc += 2;
             break;
-        case 0x22: UnimplementedInstruction(state); break;
+
+        // SHLD Store Hand L Direct
+        // Description: The contents of the L register are stored \
+           at the memory address formed by concatenati ng HI AD 0 \
+           with LOW ADO. The contents of the H register are stored at \
+           the next higher memory address.
+        // SHLD
+        case 0x22: 
+            state->memory[(opcode[2] << 8) | opcode[1]] = state->l;
+            state->memory[(opcode[2] << 8) | opcode[1] + 1] = state->h;
+            state->pc += 2;
+            break;
+
         case 0x23: UnimplementedInstruction(state); break;
         case 0x24: UnimplementedInstruction(state); break;
         case 0x25: UnimplementedInstruction(state); break;
@@ -176,7 +188,19 @@ int Emulate8080Op(State8080 *state){
         case 0x27: UnimplementedInstruction(state); break;
         case 0x28: UnimplementedInstruction(state); break;
         case 0x29: UnimplementedInstruction(state); break;
-        case 0x2a: UnimplementedInstruction(state); break;
+
+        // LHLD Load HAnd L Direct
+        // Description: The byte at the memory address formed \
+           by concatenating HI ADD with LOW ADD replaces the con- \
+           tents of the L register. The byte at the next higher memory \
+           address replaces the contents of the H register
+        // LHLD
+        case 0x2a: 
+            state->l = (opcode[2] << 8) | opcode[1];
+            state->h = (opcode[2] << 8) | opcode[1] + 1;
+            state->pc += 2;
+            break;
+
         case 0x2c: UnimplementedInstruction(state); break;
         case 0x2b: UnimplementedInstruction(state); break;
         case 0x2d: UnimplementedInstruction(state); break;
@@ -206,7 +230,17 @@ int Emulate8080Op(State8080 *state){
             state->sp = (opcode[2] << 8) | opcode[1];
             state->pc += 2;            
             break;
-        case 0x32: UnimplementedInstruction(state); break;
+
+        // STA Store Accumulator Direct
+        // Description: The contents of the accumulator replace \
+           the byte at the memory address formed by concatenating \
+           HI ADO with LOW ADO.
+        // STA
+        case 0x32: 
+            state->memory[(opcode[2] << 8) | opcode[1]] = state->a;
+            state->pc += 2;
+            break;
+
         case 0x33: UnimplementedInstruction(state); break;
         case 0x34: UnimplementedInstruction(state); break;
         case 0x35: UnimplementedInstruction(state); break;
@@ -221,7 +255,17 @@ int Emulate8080Op(State8080 *state){
         case 0x37: UnimplementedInstruction(state); break;
         case 0x38: UnimplementedInstruction(state); break;
         case 0x39: UnimplementedInstruction(state); break;
-        case 0x3a: UnimplementedInstruction(state); break;
+
+        // LDA Load Accumulator Direct
+        // Description: The byte at the memory address formed \
+           by concatenating HI ADD with LOW ADD replaces the con- \
+           tents of the accumulator.
+        // LDA
+        case 0x3a:
+            state->a = state->memory[(opcode[2] << 8) | opcode[1]];
+            state->pc += 2;
+            break;
+
         case 0x3b: UnimplementedInstruction(state); break;
         case 0x3c: UnimplementedInstruction(state); break;
         case 0x3d: UnimplementedInstruction(state); break;
