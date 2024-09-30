@@ -2119,7 +2119,7 @@ int Emulate8080Op(State8080 *state){
            mulator, and reset otherwise.
         // CMP B
         case 0xb8: 
-            uint16_t test = (uint16_t) state->a - (uint16_t) state->b;
+            uint16_t res = (uint16_t) state->a - (uint16_t) state->b;
 
             // zero flag
             if ((res & 0b11111111) == 0)
@@ -2158,7 +2158,7 @@ int Emulate8080Op(State8080 *state){
            mulator, and reset otherwise.
         // CMP C
         case 0xb9: 
-            uint16_t test = (uint16_t) state->a - (uint16_t) state->c;
+            uint16_t res = (uint16_t) state->a - (uint16_t) state->c;
 
             // zero flag
             if ((res & 0b11111111) == 0)
@@ -2197,7 +2197,7 @@ int Emulate8080Op(State8080 *state){
            mulator, and reset otherwise.
         // CMP D
         case 0xba: 
-            uint16_t test = (uint16_t) state->a - (uint16_t) state->d;
+            uint16_t res = (uint16_t) state->a - (uint16_t) state->d;
 
             // zero flag
             if ((res & 0b11111111) == 0)
@@ -2236,7 +2236,7 @@ int Emulate8080Op(State8080 *state){
            mulator, and reset otherwise.
         // CMP E
         case 0xbb:
-            uint16_t test = (uint16_t) state->a - (uint16_t) state->e;
+            uint16_t res = (uint16_t) state->a - (uint16_t) state->e;
 
             // zero flag
             if ((res & 0b11111111) == 0)
@@ -2275,7 +2275,7 @@ int Emulate8080Op(State8080 *state){
            mulator, and reset otherwise.
         // CMP H
         case 0xbc: 
-            uint16_t test = (uint16_t) state->a - (uint16_t) state->h;
+            uint16_t res = (uint16_t) state->a - (uint16_t) state->h;
 
             // zero flag
             if ((res & 0b11111111) == 0)
@@ -2314,7 +2314,7 @@ int Emulate8080Op(State8080 *state){
            mulator, and reset otherwise.
         // CMP L
         case 0xbd: 
-            uint16_t test = (uint16_t) state->a - (uint16_t) state->l;
+            uint16_t res = (uint16_t) state->a - (uint16_t) state->l;
 
             // zero flag
             if ((res & 0b11111111) == 0)
@@ -2353,7 +2353,7 @@ int Emulate8080Op(State8080 *state){
            mulator, and reset otherwise.
         // CMP M (mem ref)
         case 0xbe: 
-            uint16_t test = (uint16_t) state->a - (uint16_t) state->memory[(state->h << 8) | state->l];
+            uint16_t res = (uint16_t) state->a - (uint16_t) state->memory[(state->h << 8) | state->l];
 
             // zero flag
             if ((res & 0b11111111) == 0)
@@ -2392,7 +2392,7 @@ int Emulate8080Op(State8080 *state){
            mulator, and reset otherwise.
         // CMP A
         case 0xbf:
-            uint16_t test = (uint16_t) state->a - (uint16_t) state->a;
+            uint16_t res = (uint16_t) state->a - (uint16_t) state->a;
 
             // zero flag
             if ((res & 0b11111111) == 0)
@@ -2429,7 +2429,32 @@ int Emulate8080Op(State8080 *state){
            arithmetic.
         // ADI
         case 0xc6: 
+            uint16_t res = (uint16_t) state->a + (uint16_t) opcode[1];
             
+            // zero flag
+            if ((res & 0b11111111) == 0b0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (state->a & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            if (res > 0b11111111)
+                state->cc.cy = 1;
+            else
+                state->cc.cy = 0;
+
+            state->cc.p = parity(res & 0b11111111);
+
+            state->a = res & 0b11111111;            
+
+            state->pc += 1;
+
             break;
         case 0xc7: UnimplementedInstruction(state); break;
         case 0xc8: UnimplementedInstruction(state); break;
@@ -2438,7 +2463,41 @@ int Emulate8080Op(State8080 *state){
         case 0xcb: UnimplementedInstruction(state); break;
         case 0xcc: UnimplementedInstruction(state); break;
         case 0xcd: UnimplementedInstruction(state); break;
-        case 0xce: UnimplementedInstruction(state); break;
+
+        // ACI Add Immediate To Accumulator With Carry
+        // Description: The byte of immediate data is added to \
+           the contents of the accumulator plus the contents of the \
+           carry bit.
+        // ACI
+        case 0xce:
+            uint16_t res = (uint16_t) state->a + (uint16_t) opcode[1] + state->cc.cy;
+
+            // zero flag
+            if ((res & 0b11111111) == 0b0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (state->a & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            if (res > 0b11111111)
+                state->cc.cy = 1;
+            else
+                state->cc.cy = 0;
+
+            state->cc.p = parity(res & 0b11111111);
+
+            state->a = res & 0b11111111;            
+
+            state->pc += 1;
+
+            break;
+
         case 0xcf: UnimplementedInstruction(state); break;
         case 0xd0: UnimplementedInstruction(state); break;
         case 0xd1: UnimplementedInstruction(state); break;
@@ -2446,7 +2505,45 @@ int Emulate8080Op(State8080 *state){
         case 0xd3: UnimplementedInstruction(state); break;
         case 0xd4: UnimplementedInstruction(state); break;
         case 0xd5: UnimplementedInstruction(state); break;
-        case 0xd6: UnimplementedInstruction(state); break;
+
+        // SUI Subtract Immediate From Accumulator
+        // Description: The byte of immediate data is subtracted \
+           from the contents of the accumulator using two's comple- \
+           ment arithmetic. \
+           Since this is a subtraction operation, the carry bit is \
+           set, indicati ng a borrow, if there is no carry out of the high- \
+           order bit position, and reset if there is a carry out.
+        // 
+        case 0xd6: 
+            uint16_t res = (uint16_t) state->a - (uint16_t) opcode[1];
+
+            // zero flag
+            if ((res & 0b11111111) == 0b0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (state->a & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            if (res > 0b11111111)
+                state->cc.cy = 0;
+            else
+                state->cc.cy = 1;
+
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
+            state->a = res & 0b11111111;            
+
+            state->pc += 1;
+
+            break;
+
         case 0xd7: UnimplementedInstruction(state); break;
         case 0xd8: UnimplementedInstruction(state); break;
         case 0xd9: UnimplementedInstruction(state); break;
@@ -2454,7 +2551,43 @@ int Emulate8080Op(State8080 *state){
         case 0xdb: UnimplementedInstruction(state); break;
         case 0xdc: UnimplementedInstruction(state); break;
         case 0xdd: UnimplementedInstruction(state); break;
-        case 0xde: UnimplementedInstruction(state); break;
+
+        // SBI Subtract Immediate from Accumulator \
+           With Borrow
+        // Description: The Carry bit is internally added to the \
+           byte of immediate data. This value is then subtracted from \
+           the accumulator using two's complement arithmetic.
+        // SBI
+        case 0xde: 
+            uint16_t res = (uint16_t) state->a - ((uint16_t) opcode[1] + state->cc.cy);
+
+            // zero flag
+            if ((res & 0b11111111) == 0b0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (state->a & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            if (res > 0b11111111)
+                state->cc.cy = 0;
+            else
+                state->cc.cy = 1;
+
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
+            state->a = res & 0b11111111;            
+
+            state->pc += 1;
+
+            break;
+
         case 0xdf: UnimplementedInstruction(state); break;
         case 0xe0: UnimplementedInstruction(state); break;
         case 0xe1: UnimplementedInstruction(state); break;
@@ -2462,7 +2595,37 @@ int Emulate8080Op(State8080 *state){
         case 0xe3: UnimplementedInstruction(state); break;
         case 0xe4: UnimplementedInstruction(state); break;
         case 0xe5: UnimplementedInstruction(state); break;
-        case 0xe6: UnimplementedInstruction(state); break;
+
+        // ANI And Immediate With Accumulator
+        // Description: The byte of immediate data is logically \
+           ANDed with the contents of the accumulator. The Carry bit \
+           is reset to zero.
+        // ANI
+        case 0xe6: 
+            state->a = state->a & opcode[1];
+
+            // zero flag
+            if (state->a == 0b0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (state->a & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            //carry bit
+            state->cc.z = 0;
+
+            // parity flag
+            state->cc.p = parity(state->a);
+
+            state->pc += 1;
+
+            break;
+
         case 0xe7: UnimplementedInstruction(state); break;
         case 0xe8: UnimplementedInstruction(state); break;
         case 0xe9: UnimplementedInstruction(state); break;
@@ -2470,7 +2633,37 @@ int Emulate8080Op(State8080 *state){
         case 0xeb: UnimplementedInstruction(state); break;
         case 0xec: UnimplementedInstruction(state); break;
         case 0xed: UnimplementedInstruction(state); break;
-        case 0xee: UnimplementedInstruction(state); break;
+
+        // XRI Exclusive-Or Immediate With Accumulator
+        // Description: The byte of immediate data is EXCLU- \
+           SIV E-ORed with the contents of the accumulator. The carry \
+           bit is set to zero.
+        // XRI
+        case 0xee: 
+            state->a = state->a ^ opcode[1];
+
+            // zero flag
+            if (state->a == 0b0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (state->a & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            //carry bit
+            state->cc.z = 0;
+
+            // parity flag
+            state->cc.p = parity(state->a);
+
+            state->pc += 1;
+
+            break;
+
         case 0xef: UnimplementedInstruction(state); break;
         case 0xf0: UnimplementedInstruction(state); break;
         case 0xf1: UnimplementedInstruction(state); break;
@@ -2478,7 +2671,36 @@ int Emulate8080Op(State8080 *state){
         case 0xf3: UnimplementedInstruction(state); break;
         case 0xf4: UnimplementedInstruction(state); break;
         case 0xf5: UnimplementedInstruction(state); break;
-        case 0xf6: UnimplementedInstruction(state); break;
+
+        // ORI Or Immediate With Accumulator
+        // Description: The byte of immediate data is logically \
+           ORed with the contents of the accumulator
+        // ORI
+        case 0xf6:
+            state->a = state->a | opcode[1];
+
+            // zero flag
+            if (state->a == 0b0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (state->a & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            //carry bit
+            state->cc.z = 0;
+
+            // parity flag
+            state->cc.p = parity(state->a);
+
+            state->pc += 1;
+
+            break;
+
         case 0xf7: UnimplementedInstruction(state); break;
         case 0xf8: UnimplementedInstruction(state); break;
         case 0xf9: UnimplementedInstruction(state); break;
@@ -2486,7 +2708,39 @@ int Emulate8080Op(State8080 *state){
         case 0xfb: UnimplementedInstruction(state); break;
         case 0xfc: UnimplementedInstruction(state); break;
         case 0xfd: UnimplementedInstruction(state); break;
-        case 0xfe: UnimplementedInstruction(state); break;
+
+        // CPI Compare Immediate With Accumulator
+        // Description: The byte of immediate data is compared \
+           to the contents of the accumulator.
+        // CPI
+        case 0xfe:
+            uint16_t res = (uint16_t) state->a - (uint16_t) opcode[1];
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            // there will be carry if the result is 0 or negative
+            // if there is carry, carry flag is reset
+            // if there isn't carry, carry flag is set
+            state->cc.cy = (state->a <= opcode[1]) ? 0 : 1;
+
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
+            state->pc += 1
+
+            break;
+
         case 0xff: UnimplementedInstruction(state); break;
     }
     state->pc++;
