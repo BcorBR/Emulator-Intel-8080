@@ -1,20 +1,21 @@
 #include <stdlib.h>
 #include <stdio.h>
-
-unsigned int concatenar(unsigned int a, unsigned int b){
-    
-    return (a << 4) | b;
-}
+#include <stdint.h>
 
 int main(){
-    unsigned int a = 0b1010;
-    unsigned int b = 0b1100;   
+    uint16_t a = 0b00000001;
+    uint16_t b = 0b00000001;
     
-    unsigned int c = (a << 4) | b;
+    // testes, ~x turns bits correctly
+
+
+    // testing negative result
+    uint16_t c = a - b;
+    uint16_t d = a + (~b + 1);
+
+    printf("%016b", d);
+
     
-    printf("%b", c);
     
     return 0;
-    
-    
 }

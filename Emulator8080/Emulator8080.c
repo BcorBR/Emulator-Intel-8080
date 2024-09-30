@@ -585,6 +585,7 @@ int Emulate8080Op(State8080 *state){
             // do the math with higher precision for carry out \
                analysis
             uint16_t res = (uint16_t) state->a + (uint16_t) state->a;
+            
             // zero flag
             if ((res & 0b11111111) == 0)
                 state->cc.z = 1;
@@ -615,9 +616,7 @@ int Emulate8080Op(State8080 *state){
         case 0x88: 
             // do the math with higher precision for carry out \
                analysis
-            uint16_t res = (uint16_t) state->a + (uint16_t) state->b;
-            if (state->cc.z == 1)
-                res += 0b1;
+            uint16_t res = (uint16_t) state->a + (uint16_t) state->b + state->cc.cy;
 
             // zero flag
             if ((res & 0b11111111) == 0)
@@ -650,9 +649,7 @@ int Emulate8080Op(State8080 *state){
         case 0x89: 
             // do the math with higher precision for carry out \
                analysis
-            uint16_t res = (uint16_t) state->a + (uint16_t) state->c;
-            if (state->cc.z == 1)
-                res += 0b1;
+            uint16_t res = (uint16_t) state->a + (uint16_t) state->c + state->cc.cy;
 
             // zero flag
             if ((res & 0b11111111) == 0)
@@ -685,9 +682,7 @@ int Emulate8080Op(State8080 *state){
         case 0x8a: 
             // do the math with higher precision for carry out \
                analysis
-            uint16_t res = (uint16_t) state->a + (uint16_t) state->d;
-            if (state->cc.z == 1)
-                res += 0b1;
+            uint16_t res = (uint16_t) state->a + (uint16_t) state->d + state->cc.cy;
 
             // zero flag
             if ((res & 0b11111111) == 0)
@@ -720,9 +715,7 @@ int Emulate8080Op(State8080 *state){
         case 0x8b: 
             // do the math with higher precision for carry out \
                analysis
-            uint16_t res = (uint16_t) state->a + (uint16_t) state->e;
-            if (state->cc.z == 1)
-                res += 0b1;
+            uint16_t res = (uint16_t) state->a + (uint16_t) state->e + state->cc.cy;
 
             // zero flag
             if ((res & 0b11111111) == 0)
@@ -755,9 +748,7 @@ int Emulate8080Op(State8080 *state){
         case 0x8c: 
             // do the math with higher precision for carry out \
                analysis
-            uint16_t res = (uint16_t) state->a + (uint16_t) state->h;
-            if (state->cc.z == 1)
-                res += 0b1;
+            uint16_t res = (uint16_t) state->a + (uint16_t) state->h + state->cc.cy;
 
             // zero flag
             if ((res & 0b11111111) == 0)
@@ -790,9 +781,7 @@ int Emulate8080Op(State8080 *state){
         case 0x8d: 
             // do the math with higher precision for carry out \
                analysis
-            uint16_t res = (uint16_t) state->a + (uint16_t) state->l;
-            if (state->cc.z == 1)
-                res += 0b1;
+            uint16_t res = (uint16_t) state->a + (uint16_t) state->l + state->cc.cy;
 
             // zero flag
             if ((res & 0b11111111) == 0)
@@ -825,9 +814,7 @@ int Emulate8080Op(State8080 *state){
         case 0x8e: 
             // do the math with higher precision for carry out \
                analysis
-            uint16_t res = (uint16_t) state->a + state->memory[(state->h << 8) | state->l];
-            if (state->cc.z == 1)
-                res += 0b1;
+            uint16_t res = (uint16_t) state->a + state->memory[(state->h << 8) | state->l] + state->cc.cy;
 
             // zero flag
             if ((res & 0b11111111) == 0)
@@ -860,9 +847,7 @@ int Emulate8080Op(State8080 *state){
         case 0x8f:
             // do the math with higher precision for carry out \
                analysis
-            uint16_t res = (uint16_t) state->a + (uint16_t) state->a;
-            if (state->cc.z == 1)
-                res += 0b1;
+            uint16_t res = (uint16_t) state->a + (uint16_t) state->a + state->cc.cy;
 
             // zero flag
             if ((res & 0b11111111) == 0)
@@ -918,82 +903,1520 @@ int Emulate8080Op(State8080 *state){
             state->cc.p = parity(res & 0b11111111);
 
             // put result into accumulator
-            state->a = res??????????????????????
+            state->a = res & 0b11111111;
+
+            break;
 
         // Description: The specified byte is subtracted from the \
            accumulator using two's complement arithmetic.
         // SUB C
-        case 0x91: UnimplementedInstruction(state); break;
+        case 0x91: 
+            uint16_t res = (uint16_t) state->a - (uint16_t) state->c;
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            // there will be carry if the result is 0 or negative
+            // if there is carry, carry flag is reset
+            // if there isn't carry, carry flag is set
+            state->cc.cy = (state->a <= state->b) ? 0 : 1;
+
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
+            // put result into accumulator
+            state->a = res & 0b11111111;
+
+            break;
 
         // Description: The specified byte is subtracted from the \
            accumulator using two's complement arithmetic.
         // SUB D
-        case 0x92: UnimplementedInstruction(state); break;
+        case 0x92: 
+            uint16_t res = (uint16_t) state->a - (uint16_t) state->d;
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            // there will be carry if the result is 0 or negative
+            // if there is carry, carry flag is reset
+            // if there isn't carry, carry flag is set
+            state->cc.cy = (state->a <= state->b) ? 0 : 1;
+
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
+            // put result into accumulator
+            state->a = res & 0b11111111;
+
+            break;
 
         // Description: The specified byte is subtracted from the \
            accumulator using two's complement arithmetic.
         // SUB E
-        case 0x93: UnimplementedInstruction(state); break;
+        case 0x93: 
+            uint16_t res = (uint16_t) state->a - (uint16_t) state->e;
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            // there will be carry if the result is 0 or negative
+            // if there is carry, carry flag is reset
+            // if there isn't carry, carry flag is set
+            state->cc.cy = (state->a <= state->b) ? 0 : 1;
+
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
+            // put result into accumulator
+            state->a = res & 0b11111111;
+
+            break;
 
         // Description: The specified byte is subtracted from the \
            accumulator using two's complement arithmetic.
         // SUB H
-        case 0x94: UnimplementedInstruction(state); break;
+        case 0x94: 
+            uint16_t res = (uint16_t) state->a - (uint16_t) state->h;
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            // there will be carry if the result is 0 or negative
+            // if there is carry, carry flag is reset
+            // if there isn't carry, carry flag is set
+            state->cc.cy = (state->a <= state->b) ? 0 : 1;
+
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
+            // put result into accumulator
+            state->a = res & 0b11111111;
+
+            break;
 
         // Description: The specified byte is subtracted from the \
            accumulator using two's complement arithmetic.
         // SUB L
-        case 0x95: UnimplementedInstruction(state); break;
+        case 0x95: 
+            uint16_t res = (uint16_t) state->a - (uint16_t) state->l;
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            // there will be carry if the result is 0 or negative
+            // if there is carry, carry flag is reset
+            // if there isn't carry, carry flag is set
+            state->cc.cy = (state->a <= state->b) ? 0 : 1;
+
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
+            // put result into accumulator
+            state->a = res & 0b11111111;
+
+            break;
 
         // Description: The specified byte is subtracted from the \
            accumulator using two's complement arithmetic.
         // SUB M (mem ref)
-        case 0x96: UnimplementedInstruction(state); break;
+        case 0x96: 
+            uint16_t res = (uint16_t) state->a - state->memory[(state->h << 8) | state->l];
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            // there will be carry if the result is 0 or negative
+            // if there is carry, carry flag is reset
+            // if there isn't carry, carry flag is set
+            state->cc.cy = (state->a <= state->b) ? 0 : 1;
+
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
+            // put result into accumulator
+            state->a = res & 0b11111111;
+
+            break;
 
         // Description: The specified byte is subtracted from the \
            accumulator using two's complement arithmetic.
         // SUB A
-        case 0x97: UnimplementedInstruction(state); break;
-        case 0x98: UnimplementedInstruction(state); break;
-        case 0x99: UnimplementedInstruction(state); break;
-        case 0x9a: UnimplementedInstruction(state); break;
-        case 0x9b: UnimplementedInstruction(state); break;
-        case 0x9c: UnimplementedInstruction(state); break;
-        case 0x9d: UnimplementedInstruction(state); break;
-        case 0x9e: UnimplementedInstruction(state); break;
-        case 0x9f: UnimplementedInstruction(state); break;
-        case 0xa0: UnimplementedInstruction(state); break;
-        case 0xa1: UnimplementedInstruction(state); break;
-        case 0xa2: UnimplementedInstruction(state); break;
-        case 0xa3: UnimplementedInstruction(state); break;
-        case 0xa4: UnimplementedInstruction(state); break;
-        case 0xa5: UnimplementedInstruction(state); break;
-        case 0xa6: UnimplementedInstruction(state); break;
-        case 0xa7: UnimplementedInstruction(state); break;
-        case 0xa8: UnimplementedInstruction(state); break;
-        case 0xa9: UnimplementedInstruction(state); break;
-        case 0xaa: UnimplementedInstruction(state); break;
-        case 0xab: UnimplementedInstruction(state); break;
-        case 0xac: UnimplementedInstruction(state); break;
-        case 0xad: UnimplementedInstruction(state); break;
-        case 0xae: UnimplementedInstruction(state); break;
-        case 0xaf: UnimplementedInstruction(state); break;
-        case 0xb0: UnimplementedInstruction(state); break;
-        case 0xb1: UnimplementedInstruction(state); break;
-        case 0xb2: UnimplementedInstruction(state); break;
-        case 0xb3: UnimplementedInstruction(state); break;
-        case 0xb4: UnimplementedInstruction(state); break;
-        case 0xb5: UnimplementedInstruction(state); break;
-        case 0xb6: UnimplementedInstruction(state); break;
-        case 0xb7: UnimplementedInstruction(state); break;
-        case 0xb8: UnimplementedInstruction(state); break;
-        case 0xb9: UnimplementedInstruction(state); break;
-        case 0xba: UnimplementedInstruction(state); break;
-        case 0xbb: UnimplementedInstruction(state); break;
-        case 0xbc: UnimplementedInstruction(state); break;
-        case 0xbd: UnimplementedInstruction(state); break;
-        case 0xbe: UnimplementedInstruction(state); break;
-        case 0xbf: UnimplementedInstruction(state); break;
+        case 0x97: 
+            uint16_t res = (uint16_t) state->a - (uint16_t) state->a;
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            // there will be carry if the result is 0 or negative
+            // if there is carry, carry flag is reset
+            // if there isn't carry, carry flag is set
+            state->cc.cy = (state->a <= state->b) ? 0 : 1;
+
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
+            // put result into accumulator
+            state->a = res & 0b11111111;
+
+            break;
+
+        // SBB Subtract Register or Memory From \
+           Accumulator With Borrow
+        // Description: The Carry bit is internally added to the \
+           contents of the specified byte. This value is then subtracted \
+           from the accumulator using two's complement arithmetic.
+        // SBB B
+        case 0x98: 
+            uint16_t res = (uint16_t) state->a - ((uint16_t) state->b + state->cc.cy);
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            // there will be carry if the result is 0 or negative
+            // if there is carry, carry flag is reset
+            // if there isn't carry, carry flag is set
+            state->cc.cy = (state->a <= state->b) ? 0 : 1;
+
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
+            // put result into accumulator
+            state->a = res & 0b11111111;
+
+            break;
+
+        // SBB Subtract Register or Memory From \
+           Accumulator With Borrow
+        // Description: The Carry bit is internally added to the \
+           contents of the specified byte. This value is then subtracted \
+           from the accumulator using two's complement arithmetic.
+        // SBB C
+        case 0x99:
+            uint16_t res = (uint16_t) state->a - ((uint16_t) state->c + state->cc.cy);
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            // there will be carry if the result is 0 or negative
+            // if there is carry, carry flag is reset
+            // if there isn't carry, carry flag is set
+            state->cc.cy = (state->a <= state->b) ? 0 : 1;
+
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
+            // put result into accumulator
+            state->a = res & 0b11111111;
+
+        // SBB Subtract Register or Memory From \
+           Accumulator With Borrow
+        // Description: The Carry bit is internally added to the \
+           contents of the specified byte. This value is then subtracted \
+           from the accumulator using two's complement arithmetic.
+        // SBB D
+        case 0x9a: 
+            uint16_t res = (uint16_t) state->a - ((uint16_t) state->d + state->cc.cy);
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            // there will be carry if the result is 0 or negative
+            // if there is carry, carry flag is reset
+            // if there isn't carry, carry flag is set
+            state->cc.cy = (state->a <= state->b) ? 0 : 1;
+
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
+            // put result into accumulator
+            state->a = res & 0b11111111;
+
+            break;
+
+        // SBB Subtract Register or Memory From \
+           Accumulator With Borrow
+        // Description: The Carry bit is internally added to the \
+           contents of the specified byte. This value is then subtracted \
+           from the accumulator using two's complement arithmetic.
+        // SBB E
+        case 0x9b: 
+            uint16_t res = (uint16_t) state->a - ((uint16_t) state->e + state->cc.cy);
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            // there will be carry if the result is 0 or negative
+            // if there is carry, carry flag is reset
+            // if there isn't carry, carry flag is set
+            state->cc.cy = (state->a <= state->b) ? 0 : 1;
+
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
+            // put result into accumulator
+            state->a = res & 0b11111111;
+
+            break;
+
+        // SBB Subtract Register or Memory From \
+           Accumulator With Borrow
+        // Description: The Carry bit is internally added to the \
+           contents of the specified byte. This value is then subtracted \
+           from the accumulator using two's complement arithmetic.
+        // SBB H
+        case 0x9c:
+            uint16_t res = (uint16_t) state->a - ((uint16_t) state->h + state->cc.cy);
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            // there will be carry if the result is 0 or negative
+            // if there is carry, carry flag is reset
+            // if there isn't carry, carry flag is set
+            state->cc.cy = (state->a <= state->b) ? 0 : 1;
+
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
+            // put result into accumulator
+            state->a = res & 0b11111111;
+
+            break;
+
+        // SBB Subtract Register or Memory From \
+           Accumulator With Borrow
+        // Description: The Carry bit is internally added to the \
+           contents of the specified byte. This value is then subtracted \
+           from the accumulator using two's complement arithmetic.
+        // SBB L
+        case 0x9d: 
+            uint16_t res = (uint16_t) state->a - ((uint16_t) state->l + state->cc.cy);
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            // there will be carry if the result is 0 or negative
+            // if there is carry, carry flag is reset
+            // if there isn't carry, carry flag is set
+            state->cc.cy = (state->a <= state->b) ? 0 : 1;
+
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
+            // put result into accumulator
+            state->a = res & 0b11111111;
+
+            break;
+
+        // SBB Subtract Register or Memory From \
+           Accumulator With Borrow
+        // Description: The Carry bit is internally added to the \
+           contents of the specified byte. This value is then subtracted \
+           from the accumulator using two's complement arithmetic.
+        // SBB M (mem ref)
+        case 0x9e: 
+            uint16_t res = (uint16_t) state->a - (state->memory[(state->h << 8) | state->l] + state->cc.cy);   // ((uint16_t) state->b + state->cc.cy);
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            // there will be carry if the result is 0 or negative
+            // if there is carry, carry flag is reset
+            // if there isn't carry, carry flag is set
+            state->cc.cy = (state->a <= state->b) ? 0 : 1;
+
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
+            // put result into accumulator
+            state->a = res & 0b11111111;
+
+            break;
+
+        // SBB Subtract Register or Memory From \
+           Accumulator With Borrow
+        // Description: The Carry bit is internally added to the \
+           contents of the specified byte. This value is then subtracted \
+           from the accumulator using two's complement arithmetic.
+        // SBB A
+        case 0x9f: 
+            uint16_t res = (uint16_t) state->a - ((uint16_t) state->a + state->cc.cy);
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            // there will be carry if the result is 0 or negative
+            // if there is carry, carry flag is reset
+            // if there isn't carry, carry flag is set
+            state->cc.cy = (state->a <= state->b) ? 0 : 1;
+
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
+            // put result into accumulator
+            state->a = res & 0b11111111;
+
+            break;
+
+        // ANA Logical and Register or Memory \
+           With Accumulator
+        // Description: The specified byte is logically ANDed bit \
+           by bit with the contents of the accumulator. The Carry bit \
+           is reset to zero.
+        // ANA B
+        case 0xa0:
+            state->a = state->a & state->b;
+            
+            // zero flag
+            if (state->a == 0b0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (state->a & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+
+            // carry flag
+            state->cc.cy = 0;
+
+            // parity flag
+            state->cc.p = parity(state->a);
+
+            break;
+
+        // ANA Logical and Register or Memory \
+           With Accumulator
+        // Description: The specified byte is logically ANDed bit \
+           by bit with the contents of the accumulator. The Carry bit \
+           is reset to zero.
+        // ANA C
+        case 0xa1: 
+            state->a = state->a & state->c;
+            
+            // zero flag
+            if (state->a == 0b0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (state->a & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+
+            // carry flag
+            state->cc.cy = 0;
+
+            // parity flag
+            state->cc.p = parity(state->a);
+
+            break;
+
+        // ANA Logical and Register or Memory \
+           With Accumulator
+        // Description: The specified byte is logically ANDed bit \
+           by bit with the contents of the accumulator. The Carry bit \
+           is reset to zero.
+        // ANA D
+        case 0xa2: 
+            state->a = state->a & state->d;
+            
+            // zero flag
+            if (state->a == 0b0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (state->a & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+
+            // carry flag
+            state->cc.cy = 0;
+
+            // parity flag
+            state->cc.p = parity(state->a);
+
+            break;
+
+        // ANA Logical and Register or Memory \
+           With Accumulator
+        // Description: The specified byte is logically ANDed bit \
+           by bit with the contents of the accumulator. The Carry bit \
+           is reset to zero.
+        // ANA E
+        case 0xa3: 
+            state->a = state->a & state->e;
+            
+            // zero flag
+            if (state->a == 0b0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (state->a & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+
+            // carry flag
+            state->cc.cy = 0;
+
+            // parity flag
+            state->cc.p = parity(state->a);
+
+            break;
+
+        // ANA Logical and Register or Memory \
+           With Accumulator
+        // Description: The specified byte is logically ANDed bit \
+           by bit with the contents of the accumulator. The Carry bit \
+           is reset to zero.
+        // ANA H
+        case 0xa4: 
+            state->a = state->a & state->h;
+            
+            // zero flag
+            if (state->a == 0b0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (state->a & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+
+            // carry flag
+            state->cc.cy = 0;
+
+            // parity flag
+            state->cc.p = parity(state->a);
+
+            break;
+
+        // ANA Logical and Register or Memory \
+           With Accumulator
+        // Description: The specified byte is logically ANDed bit \
+           by bit with the contents of the accumulator. The Carry bit \
+           is reset to zero.
+        // ANA L
+        case 0xa5:
+            state->a = state->a & state->l;
+            
+            // zero flag
+            if (state->a == 0b0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (state->a & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+
+            // carry flag
+            state->cc.cy = 0;
+
+            // parity flag
+            state->cc.p = parity(state->a);
+
+            break;
+
+        // ANA Logical and Register or Memory \
+           With Accumulator
+        // Description: The specified byte is logically ANDed bit \
+           by bit with the contents of the accumulator. The Carry bit \
+           is reset to zero.
+        // ANA M (mem ref)
+        case 0xa6: 
+            state->a = state->a & state->memory[(state->h << 8) | state->l];
+            
+            // zero flag
+            if (state->a == 0b0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (state->a & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+
+            // carry flag
+            state->cc.cy = 0;
+
+            // parity flag
+            state->cc.p = parity(state->a);
+
+            break;
+
+        // ANA Logical and Register or Memory \
+           With Accumulator
+        // Description: The specified byte is logically ANDed bit \
+           by bit with the contents of the accumulator. The Carry bit \
+           is reset to zero.
+        // ANA A
+        case 0xa7: 
+            state->a = state->a & state->a;
+            
+            // zero flag
+            if (state->a == 0b0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (state->a & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+
+            // carry flag
+            state->cc.cy = 0;
+
+            // parity flag
+            state->cc.p = parity(state->a);
+
+            break;
+
+        // XRA Logical Exclusive-Or Register or Memory \
+           With Accumulator (Zero Accumulator)
+        // Description: The specified byte is EXCLUSIVE-ORed \
+           bit by bit with the contents of the accumulator. The Carry \
+           bit is reset to zero.
+        // XRA B
+        case 0xa8:
+            state->a = state->a ^ state->b;
+
+            // zero flag
+            if (state->a == 0b0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (state->a & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            state->cc.cy = 0;
+
+            // parity flag
+            state->cc.p = parity(state->a);
+
+            break;
+
+        // XRA Logical Exclusive-Or Register or Memory \
+           With Accumulator (Zero Accumulator)
+        // Description: The specified byte is EXCLUSIVE-ORed \
+           bit by bit with the contents of the accumulator. The Carry \
+           bit is reset to zero.
+        // XRA C
+        case 0xa9:
+            state->a = state->a ^ state->c;
+
+            // zero flag
+            if (state->a == 0b0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (state->a & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            state->cc.cy = 0;
+
+            // parity flag
+            state->cc.p = parity(state->a);
+
+            break;
+
+        // XRA Logical Exclusive-Or Register or Memory \
+           With Accumulator (Zero Accumulator)
+        // Description: The specified byte is EXCLUSIVE-ORed \
+           bit by bit with the contents of the accumulator. The Carry \
+           bit is reset to zero.
+        // XRA D
+        case 0xaa: 
+            state->a = state->a ^ state->d;
+
+            // zero flag
+            if (state->a == 0b0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (state->a & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            state->cc.cy = 0;
+
+            // parity flag
+            state->cc.p = parity(state->a);
+
+            break;
+
+        // XRA Logical Exclusive-Or Register or Memory \
+           With Accumulator (Zero Accumulator)
+        // Description: The specified byte is EXCLUSIVE-ORed \
+           bit by bit with the contents of the accumulator. The Carry \
+           bit is reset to zero.
+        // XRA E
+        case 0xab: 
+            state->a = state->a ^ state->e;
+
+            // zero flag
+            if (state->a == 0b0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (state->a & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            state->cc.cy = 0;
+
+            // parity flag
+            state->cc.p = parity(state->a);
+
+            break;
+
+        // XRA Logical Exclusive-Or Register or Memory \
+           With Accumulator (Zero Accumulator)
+        // Description: The specified byte is EXCLUSIVE-ORed \
+           bit by bit with the contents of the accumulator. The Carry \
+           bit is reset to zero.
+        // XRA H
+        case 0xac: 
+            state->a = state->a ^ state->h;
+
+            // zero flag
+            if (state->a == 0b0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (state->a & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            state->cc.cy = 0;
+
+            // parity flag
+            state->cc.p = parity(state->a);
+
+            break;
+
+        // XRA Logical Exclusive-Or Register or Memory \
+           With Accumulator (Zero Accumulator)
+        // Description: The specified byte is EXCLUSIVE-ORed \
+           bit by bit with the contents of the accumulator. The Carry \
+           bit is reset to zero.
+        // XRA L
+        case 0xad: 
+            state->a = state->a ^ state->l;
+
+            // zero flag
+            if (state->a == 0b0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (state->a & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            state->cc.cy = 0;
+
+            // parity flag
+            state->cc.p = parity(state->a);
+
+            break;
+
+        // XRA Logical Exclusive-Or Register or Memory \
+           With Accumulator (Zero Accumulator)
+        // Description: The specified byte is EXCLUSIVE-ORed \
+           bit by bit with the contents of the accumulator. The Carry \
+           bit is reset to zero.
+        // XRA M (mem ref)
+        case 0xae: 
+            state->a = state->a ^ state->memory[(state->h << 8) | state->l];
+
+            // zero flag
+            if (state->a == 0b0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (state->a & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            state->cc.cy = 0;
+
+            // parity flag
+            state->cc.p = parity(state->a);
+
+            break;
+
+        // XRA Logical Exclusive-Or Register or Memory \
+           With Accumulator (Zero Accumulator)
+        // Description: The specified byte is EXCLUSIVE-ORed \
+           bit by bit with the contents of the accumulator. The Carry \
+           bit is reset to zero.
+        // XRA A
+        case 0xaf: 
+            state->a = state->a ^ state->a;
+
+            // zero flag
+            if (state->a == 0b0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (state->a & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            state->cc.cy = 0;
+
+            // parity flag
+            state->cc.p = parity(state->a);
+
+            break;
+
+        // ORA Logical or Register or Memory With \
+           Accumulator
+        // Description: The specified byte is logically ORed bit \
+           by bit with the contents of the accumulator. The carry bit \
+           is reset to zero.
+        // ORA B
+        case 0xb0: 
+            state->a = state->a | state->b;
+
+            // zero flag
+            if (state->a == 0b0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+
+            // sign flag
+            if (state->a & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+
+            // carry flag
+            state->cc.cy = 0;
+
+            // parity flag
+            state->cc.p = parity(state->a);
+
+            break;
+
+        // ORA Logical or Register or Memory With \
+           Accumulator
+        // Description: The specified byte is logically ORed bit \
+           by bit with the contents of the accumulator. The carry bit \
+           is reset to zero.
+        // ORA C
+        case 0xb1: 
+            state->a = state->a | state->c;
+
+            // zero flag
+            if (state->a == 0b0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+
+            // sign flag
+            if (state->a & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+
+            // carry flag
+            state->cc.cy = 0;
+
+            // parity flag
+            state->cc.p = parity(state->a);
+
+            break;
+
+        // ORA Logical or Register or Memory With \
+           Accumulator
+        // Description: The specified byte is logically ORed bit \
+           by bit with the contents of the accumulator. The carry bit \
+           is reset to zero.
+        // ORA D
+        case 0xb2: 
+            state->a = state->a | state->d;
+
+            // zero flag
+            if (state->a == 0b0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+
+            // sign flag
+            if (state->a & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+
+            // carry flag
+            state->cc.cy = 0;
+
+            // parity flag
+            state->cc.p = parity(state->a);
+
+            break;
+
+        // ORA Logical or Register or Memory With \
+           Accumulator
+        // Description: The specified byte is logically ORed bit \
+           by bit with the contents of the accumulator. The carry bit \
+           is reset to zero.
+        // ORA E
+        case 0xb3: 
+            state->a = state->a | state->e;
+
+            // zero flag
+            if (state->a == 0b0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+
+            // sign flag
+            if (state->a & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+
+            // carry flag
+            state->cc.cy = 0;
+
+            // parity flag
+            state->cc.p = parity(state->a);
+
+            break;
+
+        // ORA Logical or Register or Memory With \
+           Accumulator
+        // Description: The specified byte is logically ORed bit \
+           by bit with the contents of the accumulator. The carry bit \
+           is reset to zero.
+        // ORA H
+        case 0xb4: 
+            state->a = state->a | state->h;
+
+            // zero flag
+            if (state->a == 0b0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+
+            // sign flag
+            if (state->a & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+
+            // carry flag
+            state->cc.cy = 0;
+
+            // parity flag
+            state->cc.p = parity(state->a);
+
+            break;
+
+        // ORA Logical or Register or Memory With \
+           Accumulator
+        // Description: The specified byte is logically ORed bit \
+           by bit with the contents of the accumulator. The carry bit \
+           is reset to zero.
+        // ORA L
+        case 0xb5: 
+            state->a = state->a | state->l;
+
+            // zero flag
+            if (state->a == 0b0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+
+            // sign flag
+            if (state->a & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+
+            // carry flag
+            state->cc.cy = 0;
+
+            // parity flag
+            state->cc.p = parity(state->a);
+
+            break;
+
+        // ORA Logical or Register or Memory With \
+           Accumulator
+        // Description: The specified byte is logically ORed bit \
+           by bit with the contents of the accumulator. The carry bit \
+           is reset to zero.
+        // ORA M (mem ref)
+        case 0xb6: 
+            state->a = state->a | state->memory[(state->h << 8) | state->l];
+
+            // zero flag
+            if (state->a == 0b0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+
+            // sign flag
+            if (state->a & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+
+            // carry flag
+            state->cc.cy = 0;
+
+            // parity flag
+            state->cc.p = parity(state->a);
+
+            break;
+
+        // ORA Logical or Register or Memory With \
+           Accumulator
+        // Description: The specified byte is logically ORed bit \
+           by bit with the contents of the accumulator. The carry bit \
+           is reset to zero.
+        // ORA A
+        case 0xb7:
+            state->a = state->a | state->a;
+
+            // zero flag
+            if (state->a == 0b0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+
+            // sign flag
+            if (state->a & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+
+            // carry flag
+            state->cc.cy = 0;
+
+            // parity flag
+            state->cc.p = parity(state->a);
+
+            break;
+
+        // CMP Compare Register or Memory \
+           With Accumulator
+        // Description: The specified byte is compared to the \
+           contents of the accumulator. The comparison is performed \
+           by internally subtracting the contents of REG from the ac- \
+           cumulator (leaving both unchanged) and setting the condi- \
+           tion bits according to the result. In particular, the Zero bit is \
+           set if the quantities are equal, and reset if they are unequal. \
+           Since a subtract operation is performed, the Carry bit will be \
+           set if there is no carry out of bit 7, indicati ng that the \
+           contents of REG are greater than the contents of the accu- \
+           mulator, and reset otherwise.
+        // CMP B
+        case 0xb8: 
+            uint16_t test = (uint16_t) state->a - (uint16_t) state->b;
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            // there will be carry if the result is 0 or negative
+            // if there is carry, carry flag is reset
+            // if there isn't carry, carry flag is set
+            state->cc.cy = (state->a <= state->b) ? 0 : 1;
+
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
+            break;
+
+        // CMP Compare Register or Memory \
+           With Accumulator
+        // Description: The specified byte is compared to the \
+           contents of the accumulator. The comparison is performed \
+           by internally subtracting the contents of REG from the ac- \
+           cumulator (leaving both unchanged) and setting the condi- \
+           tion bits according to the result. In particular, the Zero bit is \
+           set if the quantities are equal, and reset if they are unequal. \
+           Since a subtract operation is performed, the Carry bit will be \
+           set if there is no carry out of bit 7, indicati ng that the \
+           contents of REG are greater than the contents of the accu- \
+           mulator, and reset otherwise.
+        // CMP C
+        case 0xb9: 
+            uint16_t test = (uint16_t) state->a - (uint16_t) state->c;
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            // there will be carry if the result is 0 or negative
+            // if there is carry, carry flag is reset
+            // if there isn't carry, carry flag is set
+            state->cc.cy = (state->a <= state->c) ? 0 : 1;
+
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
+            break;
+
+        // CMP Compare Register or Memory \
+           With Accumulator
+        // Description: The specified byte is compared to the \
+           contents of the accumulator. The comparison is performed \
+           by internally subtracting the contents of REG from the ac- \
+           cumulator (leaving both unchanged) and setting the condi- \
+           tion bits according to the result. In particular, the Zero bit is \
+           set if the quantities are equal, and reset if they are unequal. \
+           Since a subtract operation is performed, the Carry bit will be \
+           set if there is no carry out of bit 7, indicati ng that the \
+           contents of REG are greater than the contents of the accu- \
+           mulator, and reset otherwise.
+        // CMP D
+        case 0xba: 
+            uint16_t test = (uint16_t) state->a - (uint16_t) state->d;
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            // there will be carry if the result is 0 or negative
+            // if there is carry, carry flag is reset
+            // if there isn't carry, carry flag is set
+            state->cc.cy = (state->a <= state->d) ? 0 : 1;
+
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
+            break;
+
+        // CMP Compare Register or Memory \
+           With Accumulator
+        // Description: The specified byte is compared to the \
+           contents of the accumulator. The comparison is performed \
+           by internally subtracting the contents of REG from the ac- \
+           cumulator (leaving both unchanged) and setting the condi- \
+           tion bits according to the result. In particular, the Zero bit is \
+           set if the quantities are equal, and reset if they are unequal. \
+           Since a subtract operation is performed, the Carry bit will be \
+           set if there is no carry out of bit 7, indicati ng that the \
+           contents of REG are greater than the contents of the accu- \
+           mulator, and reset otherwise.
+        // CMP E
+        case 0xbb:
+            uint16_t test = (uint16_t) state->a - (uint16_t) state->e;
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            // there will be carry if the result is 0 or negative
+            // if there is carry, carry flag is reset
+            // if there isn't carry, carry flag is set
+            state->cc.cy = (state->a <= state->e) ? 0 : 1;
+
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
+            break;
+
+        // CMP Compare Register or Memory \
+           With Accumulator
+        // Description: The specified byte is compared to the \
+           contents of the accumulator. The comparison is performed \
+           by internally subtracting the contents of REG from the ac- \
+           cumulator (leaving both unchanged) and setting the condi- \
+           tion bits according to the result. In particular, the Zero bit is \
+           set if the quantities are equal, and reset if they are unequal. \
+           Since a subtract operation is performed, the Carry bit will be \
+           set if there is no carry out of bit 7, indicati ng that the \
+           contents of REG are greater than the contents of the accu- \
+           mulator, and reset otherwise.
+        // CMP H
+        case 0xbc: 
+            uint16_t test = (uint16_t) state->a - (uint16_t) state->h;
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            // there will be carry if the result is 0 or negative
+            // if there is carry, carry flag is reset
+            // if there isn't carry, carry flag is set
+            state->cc.cy = (state->a <= state->h) ? 0 : 1;
+
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
+            break;
+
+        // CMP Compare Register or Memory \
+           With Accumulator
+        // Description: The specified byte is compared to the \
+           contents of the accumulator. The comparison is performed \
+           by internally subtracting the contents of REG from the ac- \
+           cumulator (leaving both unchanged) and setting the condi- \
+           tion bits according to the result. In particular, the Zero bit is \
+           set if the quantities are equal, and reset if they are unequal. \
+           Since a subtract operation is performed, the Carry bit will be \
+           set if there is no carry out of bit 7, indicati ng that the \
+           contents of REG are greater than the contents of the accu- \
+           mulator, and reset otherwise.
+        // CMP L
+        case 0xbd: 
+            uint16_t test = (uint16_t) state->a - (uint16_t) state->l;
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            // there will be carry if the result is 0 or negative
+            // if there is carry, carry flag is reset
+            // if there isn't carry, carry flag is set
+            state->cc.cy = (state->a <= state->l) ? 0 : 1;
+
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
+            break;
+
+        // CMP Compare Register or Memory \
+           With Accumulator
+        // Description: The specified byte is compared to the \
+           contents of the accumulator. The comparison is performed \
+           by internally subtracting the contents of REG from the ac- \
+           cumulator (leaving both unchanged) and setting the condi- \
+           tion bits according to the result. In particular, the Zero bit is \
+           set if the quantities are equal, and reset if they are unequal. \
+           Since a subtract operation is performed, the Carry bit will be \
+           set if there is no carry out of bit 7, indicati ng that the \
+           contents of REG are greater than the contents of the accu- \
+           mulator, and reset otherwise.
+        // CMP M (mem ref)
+        case 0xbe: 
+            uint16_t test = (uint16_t) state->a - (uint16_t) state->memory[(state->h << 8) | state->l];
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            // there will be carry if the result is 0 or negative
+            // if there is carry, carry flag is reset
+            // if there isn't carry, carry flag is set
+            state->cc.cy = (state->a <= state->memory[(state->h << 8) | state->l]) ? 0 : 1;
+
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
+            break;
+
+        // CMP Compare Register or Memory \
+           With Accumulator
+        // Description: The specified byte is compared to the \
+           contents of the accumulator. The comparison is performed \
+           by internally subtracting the contents of REG from the ac- \
+           cumulator (leaving both unchanged) and setting the condi- \
+           tion bits according to the result. In particular, the Zero bit is \
+           set if the quantities are equal, and reset if they are unequal. \
+           Since a subtract operation is performed, the Carry bit will be \
+           set if there is no carry out of bit 7, indicati ng that the \
+           contents of REG are greater than the contents of the accu- \
+           mulator, and reset otherwise.
+        // CMP A
+        case 0xbf:
+            uint16_t test = (uint16_t) state->a - (uint16_t) state->a;
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            // there will be carry if the result is 0 or negative
+            // if there is carry, carry flag is reset
+            // if there isn't carry, carry flag is set
+            state->cc.cy = (state->a <= state->a) ? 0 : 1;
+
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
+            break;
+
         case 0xc0: UnimplementedInstruction(state); break;
         case 0xc1: UnimplementedInstruction(state); break;
         case 0xc2: UnimplementedInstruction(state); break;
