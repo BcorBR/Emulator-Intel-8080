@@ -2737,7 +2737,7 @@ int Emulate8080Op(State8080 *state){
             // parity flag
             state->cc.p = parity(res & 0b11111111);
 
-            state->pc += 1
+            state->pc += 1;
 
             break;
 
