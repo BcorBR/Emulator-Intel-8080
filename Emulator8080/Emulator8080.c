@@ -2463,8 +2463,28 @@ int Emulate8080Op(State8080 *state){
 
         case 0xc0: UnimplementedInstruction(state); break;
         case 0xc1: UnimplementedInstruction(state); break;
-        case 0xc2: UnimplementedInstruction(state); break;
-        case 0xc3: UnimplementedInstruction(state); break;
+
+        // JNZ Jump If Not Zero 
+        // Description: If the Zero bit is zero, program execu- \
+           tion continues at the memory address adr.
+        // JNZ
+        case 0xc2:
+            if (!(state->cc.z))
+                state->pc = (opcode[2] << 8) | opcode[1];
+            else
+                state->pc += 2;
+            
+            break;
+
+        // JMP JUMP
+        // Description: Program execution continues uncondi- \
+           tionally at memory address adr.
+        // JMP
+        case 0xc3:
+            state->pc =(opcode[2] << 8) | opcode[1];
+
+            break;
+
         case 0xc4: UnimplementedInstruction(state); break;
         case 0xc5: UnimplementedInstruction(state); break;
 
@@ -2503,7 +2523,19 @@ int Emulate8080Op(State8080 *state){
         case 0xc7: UnimplementedInstruction(state); break;
         case 0xc8: UnimplementedInstruction(state); break;
         case 0xc9: UnimplementedInstruction(state); break;
-        case 0xca: UnimplementedInstruction(state); break;
+
+        // JZ Jump If Zero
+        // Description: If the zero bit is one, program execution \
+           continues at the memory address adr.
+        // JZ
+        case 0xca:
+            if (state->cc.z)
+            else
+                state->pc = (opcode[2] << 8) | opcode[1];
+                state->pc += 2;
+            
+            break;
+
         case 0xcb: UnimplementedInstruction(state); break;
         case 0xcc: UnimplementedInstruction(state); break;
         case 0xcd: UnimplementedInstruction(state); break;
@@ -2545,7 +2577,19 @@ int Emulate8080Op(State8080 *state){
         case 0xcf: UnimplementedInstruction(state); break;
         case 0xd0: UnimplementedInstruction(state); break;
         case 0xd1: UnimplementedInstruction(state); break;
-        case 0xd2: UnimplementedInstruction(state); break;
+
+        // JNC Jump If No Carry
+        // Description: If the Carry bit is zero, program execu- \
+           tion continues at the memory address adr.
+        // JNC
+        case 0xd2: 
+            if (!(state->cc.cy))
+                state->pc = (opcode[2] << 8) | opcode[1];
+            else
+                state->pc += 2;
+
+            break;
+
         case 0xd3: UnimplementedInstruction(state); break;
         case 0xd4: UnimplementedInstruction(state); break;
         case 0xd5: UnimplementedInstruction(state); break;
@@ -2591,7 +2635,19 @@ int Emulate8080Op(State8080 *state){
         case 0xd7: UnimplementedInstruction(state); break;
         case 0xd8: UnimplementedInstruction(state); break;
         case 0xd9: UnimplementedInstruction(state); break;
-        case 0xda: UnimplementedInstruction(state); break;
+
+        // JC Jump If Carry
+        // Description: If the Carry bit is one, program execu- \
+           tion conti nues at the memory address adr.
+        // JC
+        case 0xda:
+            if (state->cc.cy)
+                state->pc = (opcode[2] << 8) | opcode[1];
+            else
+                state->pc += 2;
+            
+            break;
+
         case 0xdb: UnimplementedInstruction(state); break;
         case 0xdc: UnimplementedInstruction(state); break;
         case 0xdd: UnimplementedInstruction(state); break;
@@ -2635,7 +2691,20 @@ int Emulate8080Op(State8080 *state){
         case 0xdf: UnimplementedInstruction(state); break;
         case 0xe0: UnimplementedInstruction(state); break;
         case 0xe1: UnimplementedInstruction(state); break;
-        case 0xe2: UnimplementedInstruction(state); break;
+
+        // JPO Jump If Parity Odd
+        // Description: If the Parity bit is zero (indicating a re- \
+           sult with odd parity), program execution conti nues at the \
+           memory address adr.
+        // JPO
+        case 0xe2:
+            if (!(state->cc.p))
+                state->pc = (opcode[2] << 8) | opcode[1];
+            else
+                state->pc += 2;
+            
+            break;
+            
         case 0xe3: UnimplementedInstruction(state); break;
         case 0xe4: UnimplementedInstruction(state); break;
         case 0xe5: UnimplementedInstruction(state); break;
@@ -2672,8 +2741,32 @@ int Emulate8080Op(State8080 *state){
 
         case 0xe7: UnimplementedInstruction(state); break;
         case 0xe8: UnimplementedInstruction(state); break;
-        case 0xe9: UnimplementedInstruction(state); break;
-        case 0xea: UnimplementedInstruction(state); break;
+
+        // PCHL Load Program Counter
+        // Description: The contents of the H register replace the \
+           most significant 8 bits of the program counter, and the con- \
+           tents of the L register replace the least significant 8 bits of \
+           the program counter. This causes program execution to con- \
+           tinue at the address contained in the Hand L registers.
+        // PCHL
+        case 0xe9:
+            state->pc = (state->h << 8) | state->l;
+
+            break;
+        
+        // JPE Jump If Parity Even
+        // Description: If the parity bit is one (indicating a result \
+           with even parity), program execution continues at the mem- \
+           ory address adr.
+        // JPE
+        case 0xea: 
+            if (state->cc.p)
+                state->pc = (opcode[2] << 8) | opcode[1];
+            else
+                state->pc += 2;
+
+            break;
+
         case 0xeb: UnimplementedInstruction(state); break;
         case 0xec: UnimplementedInstruction(state); break;
         case 0xed: UnimplementedInstruction(state); break;
@@ -2711,7 +2804,20 @@ int Emulate8080Op(State8080 *state){
         case 0xef: UnimplementedInstruction(state); break;
         case 0xf0: UnimplementedInstruction(state); break;
         case 0xf1: UnimplementedInstruction(state); break;
-        case 0xf2: UnimplementedInstruction(state); break;
+
+        // JP Jump If Positive
+        // Description: If the sign bit is zero, (indicating a posi- \
+           tive result), program execution continues at the memory \
+           address adr.
+        // JP
+        case 0xf2:
+            if (!(state->cc.s))
+                state->pc = (opcode[2] << 8) | opcode[1];
+            else
+                state->pc += 2;
+
+            break;
+
         case 0xf3: UnimplementedInstruction(state); break;
         case 0xf4: UnimplementedInstruction(state); break;
         case 0xf5: UnimplementedInstruction(state); break;
@@ -2748,7 +2854,20 @@ int Emulate8080Op(State8080 *state){
         case 0xf7: UnimplementedInstruction(state); break;
         case 0xf8: UnimplementedInstruction(state); break;
         case 0xf9: UnimplementedInstruction(state); break;
-        case 0xfa: UnimplementedInstruction(state); break;
+
+        // JM Jump If Minus
+        // Description: If the Sign bit is one (indicating a nega- \
+           tive result), program execution continues at the memory \
+           address adr.
+        // JM
+        case 0xfa:
+            if (state->cc.s)
+                state->pc = (opcode[2] << 8) | opcode[1];
+            else
+                state->pc += 2;
+
+            break;
+
         case 0xfb: UnimplementedInstruction(state); break;
         case 0xfc: UnimplementedInstruction(state); break;
         case 0xfd: UnimplementedInstruction(state); break;
