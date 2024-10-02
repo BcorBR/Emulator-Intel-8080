@@ -71,8 +71,22 @@ int Emulate8080Op(State8080 *state){
             state->b = temp >> 8;
             state->c = temp & 0b11111111;
             break;
-        case 0x04: UnimplementedInstruction(state); break;
-        case 0x05: UnimplementedInstruction(state); break;
+
+        // INR Increment Register or Memory
+        // Description: The specified register or memory byte is \
+           incremented by one.
+        // INR B
+        case 0x04:
+            state->b += 1;
+            break;
+
+        // DCR Decrement Register or Memory
+        // Description: The specified register or memory byte is \
+           decremented by one.
+        // DCR B
+        case 0x05:
+            state->b -= 1;
+            break;
         
         // Description: The byte of immediate data is stored in \
            the specified register or memory byte ;
@@ -86,8 +100,22 @@ int Emulate8080Op(State8080 *state){
         case 0x09: UnimplementedInstruction(state); break;
         case 0x0a: UnimplementedInstruction(state); break;
         case 0x0b: UnimplementedInstruction(state); break;
-        case 0x0c: UnimplementedInstruction(state); break;
-        case 0x0d: UnimplementedInstruction(state); break;
+
+        // INR Increment Register or Memory
+        // Description: The specified register or memory byte is \
+           incremented by one.
+        // INR C
+        case 0x0c: 
+            state->c += 1;
+            break;
+
+        // DCR Decrement Register or Memory
+        // Description: The specified register or memory byte is \
+           decremented by one.
+        // DCR C
+        case 0x0d:
+            state->c -= 1;
+            break;
 
         // Description: The byte of immediate data is stored in \
            the specified register or memory byte ;
@@ -117,8 +145,22 @@ int Emulate8080Op(State8080 *state){
             break;
         case 0x12: UnimplementedInstruction(state); break;
         case 0x13: UnimplementedInstruction(state); break;
-        case 0x14: UnimplementedInstruction(state); break;
-        case 0x15: UnimplementedInstruction(state); break;
+
+        // INR Increment Register or Memory
+        // Description: The specified register or memory byte is \
+           incremented by one.
+        // INR D
+        case 0x14:
+            state->d += 1;
+            break;
+
+        // DCR Decrement Register or Memory
+        // Description: The specified register or memory byte is \
+           decremented by one.
+        // DCR D
+        case 0x15:
+            state->d -= 1;
+            break;
 
         // Description: The byte of immediate data is stored in \
            the specified register or memory byte ;
@@ -132,8 +174,22 @@ int Emulate8080Op(State8080 *state){
         case 0x19: UnimplementedInstruction(state); break;
         case 0x1a: UnimplementedInstruction(state); break;
         case 0x1b: UnimplementedInstruction(state); break;
-        case 0x1c: UnimplementedInstruction(state); break;
-        case 0x1d: UnimplementedInstruction(state); break;
+
+        // INR Increment Register or Memory
+        // Description: The specified register or memory byte is \
+           incremented by one.
+        // INR E
+        case 0x1c:
+            state->e += 1;
+            break;
+
+        // DCR Decrement Register or Memory
+        // Description: The specified register or memory byte is \
+           decremented by one.
+        // DCR E
+        case 0x1d:
+            state->e -= 1;
+            break;
 
         // Description: The byte of immediate data is stored in \
            the specified register or memory byte ;
@@ -175,8 +231,22 @@ int Emulate8080Op(State8080 *state){
             break;
 
         case 0x23: UnimplementedInstruction(state); break;
-        case 0x24: UnimplementedInstruction(state); break;
-        case 0x25: UnimplementedInstruction(state); break;
+
+        // INR Increment Register or Memory
+        // Description: The specified register or memory byte is \
+           incremented by one.
+        // INR H
+        case 0x24:
+            state->h += 1;
+            break;
+
+        // DCR Decrement Register or Memory
+        // Description: The specified register or memory byte is \
+           decremented by one.
+        // DCR H
+        case 0x25:
+            state->h -= 1;
+            break;
 
         // Description: The byte of immediate data is stored in \
            the specified register or memory byte ;
@@ -185,7 +255,10 @@ int Emulate8080Op(State8080 *state){
             state->h = opcode[1];
             state->pc += 1;
             break;
+        
+        // NOT IMPLEMENTED
         case 0x27: UnimplementedInstruction(state); break;
+
         case 0x28: UnimplementedInstruction(state); break;
         case 0x29: UnimplementedInstruction(state); break;
 
@@ -201,9 +274,23 @@ int Emulate8080Op(State8080 *state){
             state->pc += 2;
             break;
 
-        case 0x2c: UnimplementedInstruction(state); break;
+        // INR Increment Register or Memory
+        // Description: The specified register or memory byte is \
+           incremented by one.
+        // INR L
+        case 0x2c:
+            state->l += 1;
+            break;
+
         case 0x2b: UnimplementedInstruction(state); break;
-        case 0x2d: UnimplementedInstruction(state); break;
+
+        // DCR Decrement Register or Memory
+        // Description: The specified register or memory byte is \
+           decremented by one.
+        // DCR L
+        case 0x2d:
+            state->l -= 1;
+            break;
 
         // Description: The byte of immediate data is stored in \
            the specified register or memory byte ;
@@ -212,7 +299,15 @@ int Emulate8080Op(State8080 *state){
             state->l = opcode[1];
             state->pc += 1;
             break;
-        case 0x2f: UnimplementedInstruction(state); break;
+        
+        // CMA Complement Accumulator
+        // Description: Each bit of the contents of the accumula- \
+           tor is complemented (producing the one's complement)
+        // CMA
+        case 0x2f:
+            state->a = ~state->a;
+            break;
+
         case 0x30: UnimplementedInstruction(state); break;
 
         // Description: The third byte of the instruction (the \
@@ -242,8 +337,22 @@ int Emulate8080Op(State8080 *state){
             break;
 
         case 0x33: UnimplementedInstruction(state); break;
-        case 0x34: UnimplementedInstruction(state); break;
-        case 0x35: UnimplementedInstruction(state); break;
+
+        // INR Increment Register or Memory
+        // Description: The specified register or memory byte is \
+           incremented by one.
+        // INR M (mem ref)
+        case 0x34: 
+            state->memory[((state->h) << 8) | state->l] += 1;
+            break;
+
+        // DCR Decrement Register or Memory
+        // Description: The specified register or memory byte is \
+           decremented by one.
+        // DCR M (mem ref)
+        case 0x35: 
+            state->memory[((state->h) << 8) | state->l] -= 1;
+            break;
 
         // Description: The byte of immediate data is stored in \
            the specified register or memory byte ;
@@ -252,7 +361,14 @@ int Emulate8080Op(State8080 *state){
             state->memory[(state->h << 8) | state->l] = opcode[1];
             state->pc += 1;
             break;
-        case 0x37: UnimplementedInstruction(state); break;
+
+        // STC Set Carry
+        // Description: The Carry bit is set to one.
+        // STC
+        case 0x37:
+            state->cc.cy = 1;
+            break;
+
         case 0x38: UnimplementedInstruction(state); break;
         case 0x39: UnimplementedInstruction(state); break;
 
@@ -267,8 +383,22 @@ int Emulate8080Op(State8080 *state){
             break;
 
         case 0x3b: UnimplementedInstruction(state); break;
-        case 0x3c: UnimplementedInstruction(state); break;
-        case 0x3d: UnimplementedInstruction(state); break;
+
+        // INR Increment Register or Memory
+        // Description: The specified register or memory byte is \
+           incremented by one.
+        // INR A
+        case 0x3c:
+            state->a += 1;
+            break;
+
+        // DCR Decrement Register or Memory
+        // Description: The specified register or memory byte is \
+           decremented by one.
+        // DCR A
+        case 0x3d:
+            state->a -= 1;
+            break;
 
         // Description: The byte of immediate data is stored in \
            the specified register or memory byte ;
@@ -277,7 +407,19 @@ int Emulate8080Op(State8080 *state){
             state->a = opcode[1];
             state->pc += 1;
             break;
-        case 0x3f: UnimplementedInstruction(state); break;
+
+        // CMC Complement Carry
+        // Description: If the Carry bit = 0, it is set to 1. If the Carry \
+           bit = 1, it is reset to O.
+        // CMC
+        case 0x3f:
+            if (state->cc.cy)
+                state->cc.cy = 0;
+            else   
+                state->cc.cy = 1;
+            
+            break;
+        
         case 0x40: UnimplementedInstruction(state); break;
         case 0x41: UnimplementedInstruction(state); break;
         case 0x42: UnimplementedInstruction(state); break;
