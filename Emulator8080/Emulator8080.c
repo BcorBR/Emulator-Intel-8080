@@ -95,7 +95,19 @@ int Emulate8080Op(State8080 *state){
             state->b = opcode[1];
             state->pc += 1;
             break;
-        case 0x07: UnimplementedInstruction(state); break;
+
+        // RLC Rotate Accumulator Left
+        // Description: The Carry bit is set equal to the high- \
+           order bit of the accumulator. The contents of the accumu-\
+           lator are rotated one bit position to the left, with the high- \
+           order bit being transferred to the low-order bit position of \
+           the accumulator.
+        // RLC
+        case 0x07:
+            state->cc.cy = (state->a >> 7) & 0b1;
+            state->a = (state->a << 1) | state->cc.cy;
+            break;
+
         case 0x08: UnimplementedInstruction(state); break;
         case 0x09: UnimplementedInstruction(state); break;
         case 0x0a: UnimplementedInstruction(state); break;
@@ -124,7 +136,14 @@ int Emulate8080Op(State8080 *state){
             state->c = opcode[1];
             state->pc += 1;
             break;
-        case 0x0f: UnimplementedInstruction(state); break;
+
+        // RRC Rotate Accumulator Right
+        // RRC
+        case 0x0f:
+            state->cc.cy = (state->a & 0b1);
+            state-> a = (state->a >> 1) | state->cc.cy;
+            break;
+
         case 0x10: UnimplementedInstruction(state); break;
         
         // Description: The third byte of the instruction (the \
@@ -169,7 +188,15 @@ int Emulate8080Op(State8080 *state){
             state->d = opcode[1];
             state->pc += 1;
             break;
-        case 0x17: UnimplementedInstruction(state); break;
+
+        // RAL Rotate Accumulator Left Through Carry
+        // RAL
+        case 0x17: 
+            uint8_t tmp = state->cc.cy;
+            state->cc.cy = (state->a >> 7) & 0b1;
+            state->a = (state->a << 1) | tmp;
+            break;
+
         case 0x18: UnimplementedInstruction(state); break;
         case 0x19: UnimplementedInstruction(state); break;
         case 0x1a: UnimplementedInstruction(state); break;
@@ -198,7 +225,15 @@ int Emulate8080Op(State8080 *state){
             state->e = opcode[1];
             state->pc += 1;
             break;
-        case 0x1f: UnimplementedInstruction(state); break;
+        
+        // RAR Rotate Accumulator Right Through Carry
+        // RAR
+        case 0x1f:
+            uint8_t tmp = state->cc.cy;
+            state->cc.cy = state->a & 0b1;
+            state->a = (state->a >> 1) | (tmp << 7);
+            break;
+            
         case 0x20: UnimplementedInstruction(state); break;
 
         // Description: The third byte of the instruction (the \
