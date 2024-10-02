@@ -2461,7 +2461,18 @@ int Emulate8080Op(State8080 *state){
 
             break;
 
-        case 0xc0: UnimplementedInstruction(state); break;
+        // RNZ Return If Not Zero
+        // Description: If the Zero bit is zero, a return operation \
+           is performed.
+        // RNZ
+        case 0xc0:
+            if (!(state->cc.z)){
+                state->pc = state->memory[state->sp] | (state->memory[state->sp+1] << 8);
+                state->sp += 2;
+            }
+
+            break;
+
         case 0xc1: UnimplementedInstruction(state); break;
 
         // JNZ Jump If Not Zero 
@@ -2485,7 +2496,22 @@ int Emulate8080Op(State8080 *state){
 
             break;
 
-        case 0xc4: UnimplementedInstruction(state); break;
+        // CNZ Call If Not Zero
+        // Description: If the Zero bit is one, a call operation is \
+           performed to subroutine sub.
+        // CNZ
+        case 0xc4:
+            if (state->cc.z){
+                state->memory[state->sp-1] = ((state->pc+2) >> 8) & 0b11111111;
+                state->memory[state->sp-2] = (state->pc+2) & 0b11111111;
+                state->sp -= 2;
+                state->pc = ((opcode[2]) << 8) | opcode[1];
+            }
+            else
+                state->pc += 2;
+            
+            break;
+
         case 0xc5: UnimplementedInstruction(state); break;
 
         // Description: The byte of immediate data is added to \
@@ -2521,8 +2547,27 @@ int Emulate8080Op(State8080 *state){
 
             break;
         case 0xc7: UnimplementedInstruction(state); break;
-        case 0xc8: UnimplementedInstruction(state); break;
-        case 0xc9: UnimplementedInstruction(state); break;
+        
+        // RZ Return If Zero
+        // Description: If the Zero bit is one, a return operation \
+           is performed.
+        // RZ   
+        case 0xc8:
+            if (state->cc.z){
+                state->pc = state->memory[state->sp] | (state->memory[state->sp+1] << 8);
+                state->sp += 2;
+            }
+
+            break;
+
+        // RET Return
+        // Description: A return operation is unconditionally \
+           performed.
+        // RET
+        case 0xc9:
+            state->pc = state->memory[state->sp] | (state->memory[state->sp-1] << 8);
+            state->sp += 2;
+            break;
 
         // JZ Jump If Zero
         // Description: If the zero bit is one, program execution \
@@ -2530,15 +2575,40 @@ int Emulate8080Op(State8080 *state){
         // JZ
         case 0xca:
             if (state->cc.z)
-            else
                 state->pc = (opcode[2] << 8) | opcode[1];
+            else
                 state->pc += 2;
             
             break;
 
         case 0xcb: UnimplementedInstruction(state); break;
-        case 0xcc: UnimplementedInstruction(state); break;
-        case 0xcd: UnimplementedInstruction(state); break;
+
+        // CZ Call If Zero
+        // Description: If the Zero bit is zero, a call operation is \
+           performed to subroutine sub.
+        // CZ
+        case 0xcc:
+            if (!(state->cc.z)){
+                state->memory[state->sp-1] = ((state->pc+2) >> 8) & 0b11111111;
+                state->memory[state->sp-2] = (state->pc+2) & 0b11111111;
+                state->sp -= 2;
+                state->pc = (opcode[2] << 8) | opcode[1];
+            }
+            else
+                state->pc += 2;
+            break;
+
+        // CALL Call
+        // Description: A call operation is unconditionally per- \
+           formed to subroutine sub.
+        // CALL
+        case 0xcd:
+            state->memory[state->sp - 1] = ((state->pc + 2) >> 8) & 0b11111111;
+            state->memory[state->sp - 2] = (state->pc + 2) & 0b11111111;
+            state->sp -= 2;
+            state->pc = (opcode[2] << 8) | opcode[1];
+
+            break;
 
         // ACI Add Immediate To Accumulator With Carry
         // Description: The byte of immediate data is added to \
@@ -2575,7 +2645,18 @@ int Emulate8080Op(State8080 *state){
             break;
 
         case 0xcf: UnimplementedInstruction(state); break;
-        case 0xd0: UnimplementedInstruction(state); break;
+
+        // RNC Return If No Carry
+        // Description: If the carry bit is zero, a return operation \
+           is performed.
+        // RNC
+        case 0xd0:
+            if (!(state->cc.cy)){
+                state->pc = state->memory[state->sp] | (state->memory[state->sp+1] << 8);
+                state->sp += 2;
+            }
+            break;            
+
         case 0xd1: UnimplementedInstruction(state); break;
 
         // JNC Jump If No Carry
@@ -2591,7 +2672,22 @@ int Emulate8080Op(State8080 *state){
             break;
 
         case 0xd3: UnimplementedInstruction(state); break;
-        case 0xd4: UnimplementedInstruction(state); break;
+
+        // CNC Call If No Carry
+        // Description: If the Carry bit is zero, a call operation is \
+           performed to subroutine sub.
+        // CNC
+        case 0xd4: 
+            if (!(state->cc.cy)){
+                state->memory[state->sp-1] = ((state->pc+2) >> 8) & 0b11111111;
+                state->memory[state->sp-2] = (state->pc+2) & 0b11111111;
+                state->sp -= 2;
+                state->pc = (opcode[2] << 8) | opcode[1];
+            }
+            else
+                state->pc += 2;
+            break;
+
         case 0xd5: UnimplementedInstruction(state); break;
 
         // SUI Subtract Immediate From Accumulator
@@ -2633,7 +2729,19 @@ int Emulate8080Op(State8080 *state){
             break;
 
         case 0xd7: UnimplementedInstruction(state); break;
-        case 0xd8: UnimplementedInstruction(state); break;
+
+        // RC Return If Carry
+        // Description: If the Carry bit is one, a return operation \
+           is performed.
+        // RC
+        case 0xd8:
+            if (state->cc.cy){
+                state->pc = state->memory[state->sp] | (state->memory[state->sp+1] << 8);
+                state->sp += 2;
+            }
+
+            break;
+
         case 0xd9: UnimplementedInstruction(state); break;
 
         // JC Jump If Carry
@@ -2649,7 +2757,21 @@ int Emulate8080Op(State8080 *state){
             break;
 
         case 0xdb: UnimplementedInstruction(state); break;
-        case 0xdc: UnimplementedInstruction(state); break;
+        // CC Call If Carry
+        // Description: If the Carry bit is one, a call operation is \
+           performed to subroutine sub.
+        // CC
+        case 0xdc:
+            if (state->cc.cy){
+                state->memory[state->sp-1] = ((state->pc+2) >> 8) & 0b11111111;
+                state->memory[state->sp-2] = (state->pc+2) & 0b11111111;
+                state->sp -= 2;
+                state->pc = ((opcode[2]) << 8) | opcode[1];
+            }
+            else
+                state->pc += 2;
+            break;
+
         case 0xdd: UnimplementedInstruction(state); break;
 
         // SBI Subtract Immediate from Accumulator \
@@ -2689,7 +2811,18 @@ int Emulate8080Op(State8080 *state){
             break;
 
         case 0xdf: UnimplementedInstruction(state); break;
-        case 0xe0: UnimplementedInstruction(state); break;
+
+        // RPO Return If Parity Odd
+        // Description: If the Parity bit is zero (indicating odd \
+           parity), a return operation is performed.
+        // RPO
+        case 0xe0:
+            if (!(state->cc.p)){
+                state->pc = state->memory[state->sp] | (state->memory[state->sp+1] << 8);
+                state->sp += 2;
+            }
+            break;
+
         case 0xe1: UnimplementedInstruction(state); break;
 
         // JPO Jump If Parity Odd
@@ -2704,9 +2837,25 @@ int Emulate8080Op(State8080 *state){
                 state->pc += 2;
             
             break;
-            
+
         case 0xe3: UnimplementedInstruction(state); break;
-        case 0xe4: UnimplementedInstruction(state); break;
+
+        // CPO Call If Parity Odd
+        // Description: If the Parity bit is zero (indicating odd \
+           parity), a call operation is performed to subroutine sub.
+        // CPO
+        case 0xe4:
+            if (!(state->cc.p)){
+                state->memory[state->sp-1] = ((state->pc+2) >> 8) & 0b11111111;
+                state->memory[state->sp-2] = (state->pc+2) & 0b11111111;
+                state->sp -= 2;
+                state->pc = ((opcode[2]) << 8) | opcode[1];
+            }
+            else
+                state->pc += 2;
+            
+            break;
+
         case 0xe5: UnimplementedInstruction(state); break;
 
         // ANI And Immediate With Accumulator
@@ -2740,7 +2889,17 @@ int Emulate8080Op(State8080 *state){
             break;
 
         case 0xe7: UnimplementedInstruction(state); break;
-        case 0xe8: UnimplementedInstruction(state); break;
+
+        // RPE Return If Parity Even
+        // Description: If the Parity bit is one (indicating even \
+           parity), a return operation is performed.
+        // RPE
+        case 0xe8:
+            if (state->cc.p){
+                state->pc = state->memory[state->sp] | (state->memory[state->sp+1] << 8);
+                state->sp += 2;
+            }
+            break;
 
         // PCHL Load Program Counter
         // Description: The contents of the H register replace the \
@@ -2768,7 +2927,23 @@ int Emulate8080Op(State8080 *state){
             break;
 
         case 0xeb: UnimplementedInstruction(state); break;
-        case 0xec: UnimplementedInstruction(state); break;
+
+        // CPE Call If Parity Even
+        // Description: If the Parity bit is one (indicating even \
+           parity), a call operation is performed to subroutine sub.
+        // CPE
+        case 0xec:
+            if (state->cc.p){
+                state->memory[state->sp-1] = ((state->pc+2) >> 8) & 0b11111111;
+                state->memory[state->sp-2] = (state->pc+2) & 0b11111111;
+                state->sp -= 2;
+                state->pc = ((opcode[2]) << 8) | opcode[1];
+            }
+            else
+                state->pc += 2;
+            
+            break;
+
         case 0xed: UnimplementedInstruction(state); break;
 
         // XRI Exclusive-Or Immediate With Accumulator
@@ -2802,7 +2977,18 @@ int Emulate8080Op(State8080 *state){
             break;
 
         case 0xef: UnimplementedInstruction(state); break;
-        case 0xf0: UnimplementedInstruction(state); break;
+
+        // RP Return If Plus
+        // Description: If the Sign bit is zero (indicating a posi- \
+           tive result). a return operation is performed.
+        // RP
+        case 0xf0: 
+            if (!(state->cc.s)){
+                state->pc = state->memory[state->sp] | (state->memory[state->sp+1] << 8);
+                state->sp += 2;
+            }
+            break;
+
         case 0xf1: UnimplementedInstruction(state); break;
 
         // JP Jump If Positive
@@ -2819,7 +3005,23 @@ int Emulate8080Op(State8080 *state){
             break;
 
         case 0xf3: UnimplementedInstruction(state); break;
-        case 0xf4: UnimplementedInstruction(state); break;
+
+        // CP Call If Plus
+        // Description: If the Sign bit is zero (indicating a posi- \
+           tive result), a call operation is performed to subroutine sub.
+        // CP
+        case 0xf4:
+            if (!(state->cc.s)){
+                state->memory[state->sp-1] = ((state->pc+2) >> 8) & 0b11111111;
+                state->memory[state->sp-2] = (state->pc+2) & 0b11111111;
+                state->sp -= 2;
+                state->pc = ((opcode[2]) << 8) | opcode[1];
+            }
+            else
+                state->pc += 2;
+
+            break;
+
         case 0xf5: UnimplementedInstruction(state); break;
 
         // ORI Or Immediate With Accumulator
@@ -2852,7 +3054,19 @@ int Emulate8080Op(State8080 *state){
             break;
 
         case 0xf7: UnimplementedInstruction(state); break;
-        case 0xf8: UnimplementedInstruction(state); break;
+
+        // RM Return If Minus
+        // Description: If the Sign bit is one (indicating a minus \
+           result), a return operation is performed.
+        // RM
+        case 0xf8:
+            if (state->cc.s){
+                state->pc = state->memory[state->sp] | (state->memory[state->sp+1] << 8);
+                state->sp += 2;
+            }
+
+            break;
+
         case 0xf9: UnimplementedInstruction(state); break;
 
         // JM Jump If Minus
@@ -2869,7 +3083,23 @@ int Emulate8080Op(State8080 *state){
             break;
 
         case 0xfb: UnimplementedInstruction(state); break;
-        case 0xfc: UnimplementedInstruction(state); break;
+
+        // CM Call If Minus
+        // Description: If the Sign bit is one (indicating a minus \
+           result), a call operation is performed to subrouti ne sub.
+        // CM
+        case 0xfc: 
+            if (state->cc.s){
+                state->memory[state->sp-1] = ((state->pc+2) >> 8) & 0b11111111;
+                state->memory[state->sp-2] = (state->pc+2) & 0b11111111;
+                state->sp -= 2;
+                state->pc = ((opcode[2]) << 8) | opcode[1];
+            }
+            else
+                state->pc += 2;
+            
+            break;
+
         case 0xfd: UnimplementedInstruction(state); break;
 
         // CPI Compare Immediate With Accumulator
