@@ -65,6 +65,7 @@ int Emulate8080Op(State8080 *state){
         // INX Increment Register Pair \
            Description: The 16-bit number held in the specified \
            register pair is incremented by one.
+        //  INX BC
         case 0x03:
             uint16_t temp = (state->b << 8) | state->c;
             temp++;
@@ -109,9 +110,39 @@ int Emulate8080Op(State8080 *state){
             break;
 
         case 0x08: UnimplementedInstruction(state); break;
-        case 0x09: UnimplementedInstruction(state); break;
+
+        // DAD Double Add
+        // Description: The 16-bit number in the specified regis- \
+           ter pair is added to the 16-bit number held in the Hand L \
+           registers using two's complement arithmetic. The result re- \
+           places the contents of the Hand L registers.    
+        // DAD BC
+        case 0x09:
+            uint32_t tmp = ((state->b << 8) | (state->c)) + ((state->h << 8) | state->l);
+            state->h = (tmp  >> 8) & 0b11111111;
+            state->l = tmp & 0b11111111;
+
+            // carry flag
+            if (tmp & 0b100000000)
+                state->cc.cy = 1;
+            else
+                state->cc.cy = 0; 
+
+            break;
+
+            
         case 0x0a: UnimplementedInstruction(state); break;
-        case 0x0b: UnimplementedInstruction(state); break;
+
+        // DCX Decrement Register Pair
+        // Description: The 16-bit number held in the specified \
+           register pair is decremented by one.
+        // DCX BC
+        case 0x0b:
+            uint16_t tmp = (state->b << 8) | state->c;
+            tmp--;
+            state->b = tmp >> 8;
+            state->c = tmp & 0b11111111;
+            break;
 
         // INR Increment Register or Memory
         // Description: The specified register or memory byte is \
@@ -163,7 +194,17 @@ int Emulate8080Op(State8080 *state){
             state->pc += 2;
             break;
         case 0x12: UnimplementedInstruction(state); break;
-        case 0x13: UnimplementedInstruction(state); break;
+
+        // INX Increment Register Pair \
+           Description: The 16-bit number held in the specified \
+           register pair is incremented by one.
+        // INX DE
+        case 0x13:
+            uint16_t tmp = (state->d << 8) | state->e;
+            tmp++;
+            state->d = tmp >> 8;
+            state->e = tmp & 0b11111111;
+            break;
 
         // INR Increment Register or Memory
         // Description: The specified register or memory byte is \
@@ -198,9 +239,37 @@ int Emulate8080Op(State8080 *state){
             break;
 
         case 0x18: UnimplementedInstruction(state); break;
-        case 0x19: UnimplementedInstruction(state); break;
+
+        // DAD Double Add
+        // Description: The 16-bit number in the specified regis- \
+           ter pair is added to the 16-bit number held in the Hand L \
+           registers using two's complement arithmetic. The result re- \
+           places the contents of the Hand L registers.    
+        // DAD DE
+        case 0x19: 
+            uint32_t tmp = ((state->d << 8) | state->e) + ((state->h << 8) | state->l);
+            state->h = (tmp >> 8)  & 0b11111111;
+            state->l = tmp & 0b11111111;
+
+            if (tmp & 0b100000000)
+                state->cc.cy = 1;
+            else 
+                state->cc.cy = 0;
+
+            break;
+
         case 0x1a: UnimplementedInstruction(state); break;
-        case 0x1b: UnimplementedInstruction(state); break;
+
+        // DCX Decrement Register Pair
+        // Description: The 16-bit number held in the specified \
+           register pair is decremented by one.
+        // DCX DE
+        case 0x1b: 
+            uint16_t tmp = (state->d << 8) | state->e;
+            tmp--;
+            state->d = tmp >> 8;
+            state->e = tmp & 0b11111111;
+            break;
 
         // INR Increment Register or Memory
         // Description: The specified register or memory byte is \
@@ -233,7 +302,7 @@ int Emulate8080Op(State8080 *state){
             state->cc.cy = state->a & 0b1;
             state->a = (state->a >> 1) | (tmp << 7);
             break;
-            
+
         case 0x20: UnimplementedInstruction(state); break;
 
         // Description: The third byte of the instruction (the \
@@ -265,7 +334,16 @@ int Emulate8080Op(State8080 *state){
             state->pc += 2;
             break;
 
-        case 0x23: UnimplementedInstruction(state); break;
+        // INX Increment Register Pair \
+           Description: The 16-bit number held in the specified \
+           register pair is incremented by one.
+        // INX HL
+        case 0x23:
+            uint16_t tmp = (state->h << 8) | state->l;
+            tmp++;
+            state->h = tmp >> 8;
+            state->l = tmp & 0b11111111;
+            break;
 
         // INR Increment Register or Memory
         // Description: The specified register or memory byte is \
@@ -295,7 +373,24 @@ int Emulate8080Op(State8080 *state){
         case 0x27: UnimplementedInstruction(state); break;
 
         case 0x28: UnimplementedInstruction(state); break;
-        case 0x29: UnimplementedInstruction(state); break;
+
+        // DAD Double Add
+        // Description: The 16-bit number in the specified regis- \
+           ter pair is added to the 16-bit number held in the Hand L \
+           registers using two's complement arithmetic. The result re- \
+           places the contents of the Hand L registers.    
+        // DAD HL
+        case 0x29:
+            uint32_t tmp = ((state->h << 8) | state->l) << 1;
+            state->h = (tmp >> 8) & 0b11111111;
+            state->l = tmp & 0b11111111;
+
+            if (tmp & 0b100000000)
+                state->cc.cy = 1;
+            else
+                state->cc.cy = 0;
+
+            break;
 
         // LHLD Load HAnd L Direct
         // Description: The byte at the memory address formed \
@@ -309,6 +404,17 @@ int Emulate8080Op(State8080 *state){
             state->pc += 2;
             break;
 
+        // DCX Decrement Register Pair
+        // Description: The 16-bit number held in the specified \
+           register pair is decremented by one.
+        // DCX HL
+        case 0x2b:
+            uint16_t tmp = (state->h << 8) | state->l;
+            tmp--;
+            state->h = tmp >> 8;
+            state->l = tmp & 0b11111111;
+            break;
+
         // INR Increment Register or Memory
         // Description: The specified register or memory byte is \
            incremented by one.
@@ -317,7 +423,6 @@ int Emulate8080Op(State8080 *state){
             state->l += 1;
             break;
 
-        case 0x2b: UnimplementedInstruction(state); break;
 
         // DCR Decrement Register or Memory
         // Description: The specified register or memory byte is \
@@ -371,7 +476,13 @@ int Emulate8080Op(State8080 *state){
             state->pc += 2;
             break;
 
-        case 0x33: UnimplementedInstruction(state); break;
+        // INX Increment Register Pair \
+           Description: The 16-bit number held in the specified \
+           register pair is incremented by one.
+        // INX SP
+        case 0x33:
+            state->sp++;
+            break;
 
         // INR Increment Register or Memory
         // Description: The specified register or memory byte is \
@@ -405,7 +516,24 @@ int Emulate8080Op(State8080 *state){
             break;
 
         case 0x38: UnimplementedInstruction(state); break;
-        case 0x39: UnimplementedInstruction(state); break;
+
+        // DAD Double Add
+        // Description: The 16-bit number in the specified regis- \
+           ter pair is added to the 16-bit number held in the Hand L \
+           registers using two's complement arithmetic. The result re- \
+           places the contents of the Hand L registers.    
+        // DAD SP
+        case 0x39:
+            uint32_t tmp = state->sp + ((state->h << 8) | state->l);
+            state->h = (tmp >> 8) & 0b11111111;
+            state->l = tmp & 0b11111111;
+
+            if (tmp & 0b100000000)
+                state->cc.cy = 1;
+            else
+                state->cc.cy = 0;
+            
+            break;
 
         // LDA Load Accumulator Direct
         // Description: The byte at the memory address formed \
@@ -417,7 +545,13 @@ int Emulate8080Op(State8080 *state){
             state->pc += 2;
             break;
 
-        case 0x3b: UnimplementedInstruction(state); break;
+        // DCX Decrement Register Pair
+        // Description: The 16-bit number held in the specified \
+           register pair is decremented by one.
+        // DCX SP
+        case 0x3b: 
+            state->sp--;
+            break;
 
         // INR Increment Register or Memory
         // Description: The specified register or memory byte is \
@@ -509,7 +643,16 @@ int Emulate8080Op(State8080 *state){
         case 0x73: UnimplementedInstruction(state); break;
         case 0x74: UnimplementedInstruction(state); break;
         case 0x75: UnimplementedInstruction(state); break;
-        case 0x76: UnimplementedInstruction(state); break;
+
+        // HLT Halt Instruction
+        // Description: The program counter is incremented to \
+           the address of the next sequential instruction. The CPU then \
+           enters the STOPPED state and no further activity takes \
+           place until an interrupt occurs.
+        // HLT
+        case 0x76:
+            exit(0);
+
         case 0x77: UnimplementedInstruction(state); break;
         case 0x78: UnimplementedInstruction(state); break;
         case 0x79: UnimplementedInstruction(state); break;
@@ -2649,8 +2792,13 @@ int Emulate8080Op(State8080 *state){
             }
 
             break;
-
-        case 0xc1: UnimplementedInstruction(state); break;
+        // POP Pop Data Off Stack
+        // POP BC
+        case 0xc1:
+            state->c = state->memory[state->sp];
+            state->b = state->memory[state->sp+1];
+            state->sp += 2;
+            break;
 
         // JNZ Jump If Not Zero 
         // Description: If the Zero bit is zero, program execu- \
@@ -2688,8 +2836,16 @@ int Emulate8080Op(State8080 *state){
                 state->pc += 2;
             
             break;
-
-        case 0xc5: UnimplementedInstruction(state); break;
+        // PUSH Push Data Onto Stack
+        // Description: The contents of the specified register pair \
+           are saved in two bytes of memory indicated by the stack  \
+           pointer SP.
+        // PUSH BC
+        case 0xc5:
+            state->memory[state->sp-1] = state->b;
+            state->memory[state->sp-2] = state->c;
+            state->sp -= 2;
+            break;
 
         // Description: The byte of immediate data is added to \
            the contents of the accumulator using two's complement \
@@ -2834,7 +2990,13 @@ int Emulate8080Op(State8080 *state){
             }
             break;            
 
-        case 0xd1: UnimplementedInstruction(state); break;
+        // POP Pop Data Off Stack
+        // POP DE
+        case 0xd1:
+            state->e = state->memory[state->sp];
+            state->d = state->memory[state->sp+1];
+            state->sp += 2;
+            break;
 
         // JNC Jump If No Carry
         // Description: If the Carry bit is zero, program execu- \
@@ -2848,7 +3010,14 @@ int Emulate8080Op(State8080 *state){
 
             break;
 
-        case 0xd3: UnimplementedInstruction(state); break;
+        // OUT Output
+        // Description: The contents of the accumulator are sent \
+           to output device number expo
+        // OUT
+        case 0xd3:
+            // NOT YER IMPLEMENTED
+            state->pc += 1;
+            break;
 
         // CNC Call If No Carry
         // Description: If the Carry bit is zero, a call operation is \
@@ -2864,8 +3033,16 @@ int Emulate8080Op(State8080 *state){
             else
                 state->pc += 2;
             break;
-
-        case 0xd5: UnimplementedInstruction(state); break;
+        // PUSH Push Data Onto Stack
+        // Description: The contents of the specified register pair \
+           are saved in two bytes of memory indicated by the stack  \
+           pointer SP.
+        // PUSH DE
+        case 0xd5: 
+            state->memory[state->sp-1] = state->d;
+            state->memory[state->sp-2] = state->e;
+            state->sp -= 2;
+            break;
 
         // SUI Subtract Immediate From Accumulator
         // Description: The byte of immediate data is subtracted \
@@ -2933,7 +3110,16 @@ int Emulate8080Op(State8080 *state){
             
             break;
 
-        case 0xdb: UnimplementedInstruction(state); break;
+        // IN Input
+        // Description: An eight-bit data byte is read from input \
+           device number exp and replaces the contents of the \
+           accumulator.
+        // IN
+        case 0xdb:
+            // NOT YET IMPLEMENTED
+            state->pc += 1;
+            break;
+
         // CC Call If Carry
         // Description: If the Carry bit is one, a call operation is \
            performed to subroutine sub.
@@ -3000,7 +3186,13 @@ int Emulate8080Op(State8080 *state){
             }
             break;
 
-        case 0xe1: UnimplementedInstruction(state); break;
+        // POP Pop Data Off Stack
+        // POP HL
+        case 0xe1:
+            state->l = state->memory[state->sp];
+            state->h = state->memory[state->sp+1];
+            state->sp += 2;
+            break;
 
         // JPO Jump If Parity Odd
         // Description: If the Parity bit is zero (indicating a re- \
@@ -3014,8 +3206,23 @@ int Emulate8080Op(State8080 *state){
                 state->pc += 2;
             
             break;
+        // XTHL Exchange Stack
+        // Description: The contents of the L register are ex- \
+           changed with the contents of the memory byte whose ad- \
+           dress is held in the stack pointer SP. The contents of the H \
+           register are exchanged with the contents of the memory \
+           byte whose address is one greater than that held in the stack \
+           pointer.
+        // XTHL
+        case 0xe3:
+            uint8_t L = state->l;
+            uint8_t H = state->h;
 
-        case 0xe3: UnimplementedInstruction(state); break;
+            state->l = state->memory[state->sp];
+            state->h = state->memory[state->sp+1];
+            state->memory[state->sp] = L;
+            state->memory[state->sp+1] = H;
+            break;
 
         // CPO Call If Parity Odd
         // Description: If the Parity bit is zero (indicating odd \
@@ -3032,8 +3239,16 @@ int Emulate8080Op(State8080 *state){
                 state->pc += 2;
             
             break;
-
-        case 0xe5: UnimplementedInstruction(state); break;
+        // PUSH Push Data Onto Stack
+        // Description: The contents of the specified register pair \
+           are saved in two bytes of memory indicated by the stack  \
+           pointer SP.
+        // PUSH HL
+        case 0xe5:
+            state->memory[state->sp-1] = state->h;
+            state->memory[state->sp-2] = state->l;
+            state->sp -= 2;
+            break;
 
         // ANI And Immediate With Accumulator
         // Description: The byte of immediate data is logically \
@@ -3103,7 +3318,21 @@ int Emulate8080Op(State8080 *state){
 
             break;
 
-        case 0xeb: UnimplementedInstruction(state); break;
+        // XCHG Exchange Registers
+        // Description: The 16 bits of data held in the H and L \
+           registers are exchanged with the 16 bits of data held in the \
+           D and E registers.
+        // XCHG
+        case 0xeb:
+            uint8_t H = state->h;
+            uint8_t L = state->l;
+
+            state->h = state->d;
+            state->l = state->e;
+            state->d = H;
+            state->e = L;
+
+            break;
 
         // CPE Call If Parity Even
         // Description: If the Parity bit is one (indicating even \
@@ -3166,7 +3395,19 @@ int Emulate8080Op(State8080 *state){
             }
             break;
 
-        case 0xf1: UnimplementedInstruction(state); break;
+        // POP Pop Data Off Stack
+        // POP PSW
+        case 0xf1:
+            state->a = state->memory[state->sp];
+            uint8_t fl = state->memory[state->sp+1];
+            
+            state->cc.s = fl >> 7;
+            state->cc.z = (fl >> 6) & 0b1;
+            state->cc.p = (fl >> 2) & 0b1;
+            state->cc.cy = fl & 0b1;
+
+            state->sp += 2;
+            break;
 
         // JP Jump If Positive
         // Description: If the sign bit is zero, (indicating a posi- \
@@ -3181,7 +3422,13 @@ int Emulate8080Op(State8080 *state){
 
             break;
 
-        case 0xf3: UnimplementedInstruction(state); break;
+        // DI Disable Interrupts
+        // Descriptio: This instruction resets the INTE flip-flop, \
+           causing the CPU to ignore all interrupts.
+        // DI
+        case 0xf3:
+            state->int_enable = 0;
+            break;
 
         // CP Call If Plus
         // Description: If the Sign bit is zero (indicating a posi- \
@@ -3199,7 +3446,17 @@ int Emulate8080Op(State8080 *state){
 
             break;
 
-        case 0xf5: UnimplementedInstruction(state); break;
+        // PUSH Push Data Onto Stack
+        // Description: The contents of the specified register pair \
+           are saved in two bytes of memory indicated by the stack  \
+           pointer SP.
+        // PUSH PSW
+        case 0xf5: 
+            state->memory[state->sp-1] = state->a;
+            state->memory[state->sp-2] = ((state->cc.s << 7) | (state->cc.z << 6) | 
+                                            (state->cc.p << 2) | (0b10) | (state->cc.cy));
+            state->sp -= 2;
+            break;
 
         // ORI Or Immediate With Accumulator
         // Description: The byte of immediate data is logically \
@@ -3244,7 +3501,14 @@ int Emulate8080Op(State8080 *state){
 
             break;
 
-        case 0xf9: UnimplementedInstruction(state); break;
+        // SPHL Load SP From HAnd L
+        // Description: The 16 bits of data held in the Hand L \
+           registers replace the contents of the stack pointer SP. The \
+           contents of the Hand L registers are unchanged.
+        // SPHL
+        case 0xf9:
+            state->sp = (state->h << 8) | state->l;
+            break;
 
         // JM Jump If Minus
         // Description: If the Sign bit is one (indicating a nega- \
@@ -3258,8 +3522,13 @@ int Emulate8080Op(State8080 *state){
                 state->pc += 2;
 
             break;
-
-        case 0xfb: UnimplementedInstruction(state); break;
+        // EI Enable Interrupts
+        // Description: This instruction sets the I NTE flip-flop, \
+           enabling the CPU to recognize and respond to interrupts
+        // EI
+        case 0xfb:
+            state->int_enable = 1;
+            break;
 
         // CM Call If Minus
         // Description: If the Sign bit is one (indicating a minus \
