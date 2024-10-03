@@ -33,7 +33,7 @@ void UnimplementedInstruction(State8080 *state){
 
 int Emulate8080Op(State8080 *state){
     unsigned char *opcode = &state->memory[state->pc];
-
+    
     switch(*opcode){
         case 0x00: 
             break;
@@ -589,60 +589,591 @@ int Emulate8080Op(State8080 *state){
             
             break;
         
-        case 0x40: UnimplementedInstruction(state); break;
-        case 0x41: UnimplementedInstruction(state); break;
-        case 0x42: UnimplementedInstruction(state); break;
-        case 0x43: UnimplementedInstruction(state); break;
-        case 0x44: UnimplementedInstruction(state); break;
-        case 0x45: UnimplementedInstruction(state); break;
-        case 0x46: UnimplementedInstruction(state); break;
-        case 0x47: UnimplementedInstruction(state); break;
-        case 0x48: UnimplementedInstruction(state); break;
-        case 0x49: UnimplementedInstruction(state); break;
-        case 0x4a: UnimplementedInstruction(state); break;
-        case 0x4b: UnimplementedInstruction(state); break;
-        case 0x4c: UnimplementedInstruction(state); break;
-        case 0x4d: UnimplementedInstruction(state); break;
-        case 0x4e: UnimplementedInstruction(state); break;
-        case 0x4f: UnimplementedInstruction(state); break;
-        case 0x50: UnimplementedInstruction(state); break;
-        case 0x51: UnimplementedInstruction(state); break;
-        case 0x52: UnimplementedInstruction(state); break;
-        case 0x53: UnimplementedInstruction(state); break;
-        case 0x54: UnimplementedInstruction(state); break;
-        case 0x55: UnimplementedInstruction(state); break;
-        case 0x56: UnimplementedInstruction(state); break;
-        case 0x57: UnimplementedInstruction(state); break;
-        case 0x58: UnimplementedInstruction(state); break;
-        case 0x59: UnimplementedInstruction(state); break;
-        case 0x5a: UnimplementedInstruction(state); break;
-        case 0x5b: UnimplementedInstruction(state); break;
-        case 0x5c: UnimplementedInstruction(state); break;
-        case 0x5d: UnimplementedInstruction(state); break;
-        case 0x5e: UnimplementedInstruction(state); break;
-        case 0x5f: UnimplementedInstruction(state); break;
-        case 0x60: UnimplementedInstruction(state); break;
-        case 0x61: UnimplementedInstruction(state); break;
-        case 0x62: UnimplementedInstruction(state); break;
-        case 0x63: UnimplementedInstruction(state); break;
-        case 0x64: UnimplementedInstruction(state); break;
-        case 0x65: UnimplementedInstruction(state); break;
-        case 0x66: UnimplementedInstruction(state); break;
-        case 0x67: UnimplementedInstruction(state); break;
-        case 0x68: UnimplementedInstruction(state); break;
-        case 0x69: UnimplementedInstruction(state); break;
-        case 0x6a: UnimplementedInstruction(state); break;
-        case 0x6b: UnimplementedInstruction(state); break;
-        case 0x6c: UnimplementedInstruction(state); break;
-        case 0x6d: UnimplementedInstruction(state); break;
-        case 0x6e: UnimplementedInstruction(state); break;
-        case 0x6f: UnimplementedInstruction(state); break;
-        case 0x70: UnimplementedInstruction(state); break;
-        case 0x71: UnimplementedInstruction(state); break;
-        case 0x72: UnimplementedInstruction(state); break;
-        case 0x73: UnimplementedInstruction(state); break;
-        case 0x74: UnimplementedInstruction(state); break;
-        case 0x75: UnimplementedInstruction(state); break;
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV B, B
+        case 0x40: 
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV B, C
+        case 0x41:
+            state->b = state->c;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV B, D
+        case 0x42:
+            state->b = state->d;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV B, E
+        case 0x43:
+            state->b = state->e;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV B, H
+        case 0x44:
+            state->b = state->h;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV B, L
+        case 0x45:
+            state->b = state->l;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV B, M
+        case 0x46:
+            state->b = state->memory[(state->h << 8) | state->l];
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV B, A
+        case 0x47:
+            state->b = state->a;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV C, B
+        case 0x48: 
+            state->c = state->b;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV C, C
+        case 0x49:
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV C, D
+        case 0x4a:
+            state->c = state->d;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV C, E
+        case 0x4b:
+            state->c = state->e;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV C, H
+        case 0x4c:
+            state->c = state->h;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV C, L
+        case 0x4d:
+            state->c = state->l;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV C, M
+        case 0x4e:
+            state->c = state->memory[(state->h << 8) | state->l];
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV C, A
+        case 0x4f:
+            state->c = state->a;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV D, B
+        case 0x50:
+            state->d = state->b;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV D, C
+        case 0x51:
+            state->d = state->c;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV D, D
+        case 0x52:
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV D, E
+        case 0x53:
+        state->d = state->e;
+        break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV D, H
+        case 0x54:
+            state->d = state->h;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV D, L
+        case 0x55:
+            state->d = state->l;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV D, M
+        case 0x56: 
+            state->d = state->memory[(state->h << 8) | state->l];
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV D, A
+        case 0x57: 
+            state->d = state->a;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV E, B
+        case 0x58:
+            state->e = state->b;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV E, C
+        case 0x59:
+            state->e = state->c;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV E, D
+        case 0x5a:
+            state->e = state->d;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV E, E
+        case 0x5b:
+            break;
+        
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV E, H
+        case 0x5c:
+            state->e = state->h;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV E, L
+        case 0x5d:
+            state->e = state->l;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV E, M
+        case 0x5e:
+            state->e = state->memory[(state->h << 8) | state->l];
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV E, A
+        case 0x5f:
+            state->e = state->a;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV H, B
+        case 0x60:
+            state->h = state->b;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV H, C
+        case 0x61:
+            state->h = state->c;
+            break;
+        
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV H, D
+        case 0x62:
+            state->h = state->d;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV H, E
+        case 0x63:
+            state->h = state->e;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV H, H
+        case 0x64:
+            break;
+        
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV H, L
+        case 0x65:
+            state->h = state->l;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV H, M
+        case 0x66:
+            state->h = state->memory[(state->h << 8) | state->l];
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV H, A
+        case 0x67:
+            state->h = state->a;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV L, B
+        case 0x68:
+            state->l = state->b;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV L, C
+        case 0x69:
+            state->l = state->c;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV L, D
+        case 0x6a:
+            state->l = state->d;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV L, E
+        case 0x6b:
+            state->l = state->e;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV L, H
+        case 0x6c: 
+            state->l = state->h;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV L, L
+        case 0x6d: 
+            break;
+        
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV L, M
+        case 0x6e:
+            state->l = state->memory[(state->h << 8) | state->l];
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV L, A
+        case 0x6f:
+            state->l = state->a;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV M, B
+        case 0x70: 
+            state->memory[(state->h << 8) | state->l] = state->b;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV M, C
+        case 0x71: 
+            state->memory[(state->h << 8) | state->l] = state->c;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV M, D
+        case 0x72: 
+            state->memory[(state->h << 8) | state->l] = state->d;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV M, E
+        case 0x73:
+            state->memory[(state->h << 8) | state->l] = state->e;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV M, H
+        case 0x74: 
+            state->memory[(state->h << 8) | state->l] = state->h;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV M, L
+        case 0x75: 
+            state->memory[(state->h << 8) | state->l] = state->l;
+            break;
 
         // HLT Halt Instruction
         // Description: The program counter is incremented to \
@@ -653,15 +1184,104 @@ int Emulate8080Op(State8080 *state){
         case 0x76:
             exit(0);
 
-        case 0x77: UnimplementedInstruction(state); break;
-        case 0x78: UnimplementedInstruction(state); break;
-        case 0x79: UnimplementedInstruction(state); break;
-        case 0x7a: UnimplementedInstruction(state); break;
-        case 0x7b: UnimplementedInstruction(state); break;
-        case 0x7c: UnimplementedInstruction(state); break;
-        case 0x7d: UnimplementedInstruction(state); break;
-        case 0x7e: UnimplementedInstruction(state); break;
-        case 0x7f: UnimplementedInstruction(state); break;
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV M, A
+        case 0x77:
+            state->memory[(state->h << 8) | state->l] = state->a;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV A, B
+        case 0x78:
+            state->a = state->b;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV A, C
+        case 0x79:
+            state->a = state->c;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV A, D
+        case 0x7a: 
+            state->a = state->d;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV A, E
+        case 0x7b: 
+            state->a = state->e;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV A, H
+        case 0x7c: 
+            state->a = state->h;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV A, L
+        case 0x7d:  
+            state->a = state->l;
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV A, M
+        case 0x7e: 
+            state->a = state->memory[(state->h << 8) | state->l];
+            break;
+
+        // MOV
+        // Description: One byte of data is moved from the \
+           register specified by src (the source register) to the register \
+           specified by dst (the destination register). The data re- \
+           places the contents of the destination register; the source \
+           remains unchanged.
+        // MOV A, A
+        case 0x7f: 
+            state->a = state->a;
+            break;
         
         // Instructions in this class operate on the accumulator \
            using the byte in the register specified by REG. If a memory \
@@ -945,7 +1565,7 @@ int Emulate8080Op(State8080 *state){
         // Description: The specified byte is added to the con· \
            tents of the accumulator using two's complement arithmetic.
         // ADD A
-        case 0x87: UnimplementedInstruction(state); break;
+        case 0x87:
             // do the math with higher precision for carry out \
                analysis
             uint16_t res = (uint16_t) state->a + (uint16_t) state->a;
