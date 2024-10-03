@@ -55,9 +55,11 @@ int Emulate8080Op(State8080 *state){
             state->pc += 2;
             break;
         
+        // STAX Store accumulator
         // Description: The contents of the accumulator are \
            stored in the memory location addressed by registers B \
            and C, or by registers D and E.
+        // STAX B
         case 0x02:
             state->memory[(state->b << 8) | state->c] = state->a; 
             break;
@@ -130,8 +132,14 @@ int Emulate8080Op(State8080 *state){
 
             break;
 
-            
-        case 0x0a: UnimplementedInstruction(state); break;
+        // LDAX Load Accumulator
+        // Description: The contents of the memory location \
+           addressed by registers Band C, or by registers 0 and E, re- \
+           place the contents of the accumulator.
+        // LDAX B
+        case 0x0a:
+            state->a = state->memory[(state->b << 8) | state->c];
+            break;
 
         // DCX Decrement Register Pair
         // Description: The 16-bit number held in the specified \
@@ -193,7 +201,15 @@ int Emulate8080Op(State8080 *state){
             state->e = opcode[1]; 
             state->pc += 2;
             break;
-        case 0x12: UnimplementedInstruction(state); break;
+
+        // STAX Store accumulator
+        // Description: The contents of the accumulator are \
+           stored in the memory location addressed by registers B \
+           and C, or by registers D and E.
+        // STAX D
+        case 0x12:
+            state->memory[(state->d << 8) | state->e] = state->a;
+            break;
 
         // INX Increment Register Pair \
            Description: The 16-bit number held in the specified \
@@ -258,7 +274,14 @@ int Emulate8080Op(State8080 *state){
 
             break;
 
-        case 0x1a: UnimplementedInstruction(state); break;
+        // LDAX Load Accumulator
+        // Description: The contents of the memory location \
+           addressed by registers Band C, or by registers 0 and E, re- \
+           place the contents of the accumulator.
+        // LDAX D
+        case 0x1a:
+            state->a = state->memory[(state->d << 8) | state->e];
+            break;
 
         // DCX Decrement Register Pair
         // Description: The 16-bit number held in the specified \
