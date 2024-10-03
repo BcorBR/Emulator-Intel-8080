@@ -3461,7 +3461,6 @@ int Emulate8080Op(State8080 *state){
         // JMP
         case 0xc3:
             state->pc =(opcode[2] << 8) | opcode[1];
-
             break;
 
         // CNZ Call If Not Zero
