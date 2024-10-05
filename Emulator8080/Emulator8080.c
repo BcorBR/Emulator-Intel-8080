@@ -1,5 +1,7 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include <stdint.h>
+#include "../Disassembler/disDebug.h"
 
 typedef struct ConditionCodes{
     uint8_t    z:1;
@@ -25,6 +27,10 @@ typedef struct State8080{
     uint8_t    int_enable;
 } State8080;
 
+int parity(uint8_t b){
+    return b^b;
+}
+
 void UnimplementedInstruction(State8080 *state){
     state->pc--;
     printf("Error: instruction not implemented\n");
@@ -33,6 +39,10 @@ void UnimplementedInstruction(State8080 *state){
 
 int Emulate8080Op(State8080 *state){
     unsigned char *opcode = &state->memory[state->pc];
+    if (opcode == NULL){
+        printf("opcode pointer is NULL\n");
+        exit(1);
+    }
     
     switch(*opcode){
         case 0x00: 
@@ -79,17 +89,67 @@ int Emulate8080Op(State8080 *state){
         // Description: The specified register or memory byte is \
            incremented by one.
         // INR B
-        case 0x04:
+        case 0x04:{
+            uint16_t res = state->b + 1;
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            if (res > 0b11111111)
+                state->cc.cy = 1;
+            else
+                state->cc.cy = 0;
+            
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
             state->b += 1;
+
             break;
+        }
 
         // DCR Decrement Register or Memory
         // Description: The specified register or memory byte is \
            decremented by one.
         // DCR B
-        case 0x05:
+        case 0x05:{
+            uint16_t res = state->b - 1;
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            if (res > 0b11111111)
+                state->cc.cy = 1;
+            else
+                state->cc.cy = 0;
+            
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
             state->b -= 1;
+
             break;
+        }
         
         // Description: The byte of immediate data is stored in \
            the specified register or memory byte ;
@@ -119,7 +179,7 @@ int Emulate8080Op(State8080 *state){
            registers using two's complement arithmetic. The result re- \
            places the contents of the Hand L registers.    
         // DAD BC
-        case 0x09:
+        case 0x09:{
             uint32_t tmp = ((state->b << 8) | (state->c)) + ((state->h << 8) | state->l);
             state->h = (tmp  >> 8) & 0b11111111;
             state->l = tmp & 0b11111111;
@@ -131,6 +191,7 @@ int Emulate8080Op(State8080 *state){
                 state->cc.cy = 0; 
 
             break;
+        }
 
         // LDAX Load Accumulator
         // Description: The contents of the memory location \
@@ -145,28 +206,79 @@ int Emulate8080Op(State8080 *state){
         // Description: The 16-bit number held in the specified \
            register pair is decremented by one.
         // DCX BC
-        case 0x0b:
+        case 0x0b:{
             uint16_t tmp = (state->b << 8) | state->c;
             tmp--;
             state->b = tmp >> 8;
             state->c = tmp & 0b11111111;
             break;
+        }
 
         // INR Increment Register or Memory
         // Description: The specified register or memory byte is \
            incremented by one.
         // INR C
-        case 0x0c: 
+        case 0x0c: {
+            uint16_t res = state->c + 1;
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            if (res > 0b11111111)
+                state->cc.cy = 1;
+            else
+                state->cc.cy = 0;
+            
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
             state->c += 1;
+
             break;
+        }
 
         // DCR Decrement Register or Memory
         // Description: The specified register or memory byte is \
            decremented by one.
         // DCR C
-        case 0x0d:
+        case 0x0d:{
+            uint16_t res = state->c - 1;
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            if (res > 0b11111111)
+                state->cc.cy = 1;
+            else
+                state->cc.cy = 0;
+            
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
             state->c -= 1;
+
             break;
+        }
 
         // Description: The byte of immediate data is stored in \
            the specified register or memory byte ;
@@ -215,28 +327,79 @@ int Emulate8080Op(State8080 *state){
            Description: The 16-bit number held in the specified \
            register pair is incremented by one.
         // INX DE
-        case 0x13:
+        case 0x13:{
             uint16_t tmp = (state->d << 8) | state->e;
             tmp++;
             state->d = tmp >> 8;
             state->e = tmp & 0b11111111;
             break;
+        }
 
         // INR Increment Register or Memory
         // Description: The specified register or memory byte is \
            incremented by one.
         // INR D
-        case 0x14:
+        case 0x14:{
+            uint16_t res = state->d + 1;
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            if (res > 0b11111111)
+                state->cc.cy = 1;
+            else
+                state->cc.cy = 0;
+            
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
             state->d += 1;
+
             break;
+        }
 
         // DCR Decrement Register or Memory
         // Description: The specified register or memory byte is \
            decremented by one.
         // DCR D
-        case 0x15:
+        case 0x15:{
+            uint16_t res = state->d - 1;
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            if (res > 0b11111111)
+                state->cc.cy = 1;
+            else
+                state->cc.cy = 0;
+            
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
             state->d -= 1;
+
             break;
+        }
 
         // Description: The byte of immediate data is stored in \
            the specified register or memory byte ;
@@ -248,11 +411,12 @@ int Emulate8080Op(State8080 *state){
 
         // RAL Rotate Accumulator Left Through Carry
         // RAL
-        case 0x17: 
+        case 0x17: {
             uint8_t tmp = state->cc.cy;
             state->cc.cy = (state->a >> 7) & 0b1;
             state->a = (state->a << 1) | tmp;
             break;
+        }
 
         case 0x18: UnimplementedInstruction(state); break;
 
@@ -262,7 +426,7 @@ int Emulate8080Op(State8080 *state){
            registers using two's complement arithmetic. The result re- \
            places the contents of the Hand L registers.    
         // DAD DE
-        case 0x19: 
+        case 0x19: {
             uint32_t tmp = ((state->d << 8) | state->e) + ((state->h << 8) | state->l);
             state->h = (tmp >> 8)  & 0b11111111;
             state->l = tmp & 0b11111111;
@@ -273,6 +437,7 @@ int Emulate8080Op(State8080 *state){
                 state->cc.cy = 0;
 
             break;
+        }
 
         // LDAX Load Accumulator
         // Description: The contents of the memory location \
@@ -287,28 +452,79 @@ int Emulate8080Op(State8080 *state){
         // Description: The 16-bit number held in the specified \
            register pair is decremented by one.
         // DCX DE
-        case 0x1b: 
+        case 0x1b: {
             uint16_t tmp = (state->d << 8) | state->e;
             tmp--;
             state->d = tmp >> 8;
             state->e = tmp & 0b11111111;
             break;
+        }
 
         // INR Increment Register or Memory
         // Description: The specified register or memory byte is \
            incremented by one.
         // INR E
-        case 0x1c:
+        case 0x1c:{
+            uint16_t res = state->e + 1;
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            if (res > 0b11111111)
+                state->cc.cy = 1;
+            else
+                state->cc.cy = 0;
+            
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
             state->e += 1;
+
             break;
+        }
 
         // DCR Decrement Register or Memory
         // Description: The specified register or memory byte is \
            decremented by one.
         // DCR E
-        case 0x1d:
+        case 0x1d:{
+            uint16_t res = state->e -  1;
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            if (res > 0b11111111)
+                state->cc.cy = 1;
+            else
+                state->cc.cy = 0;
+            
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
             state->e -= 1;
+
             break;
+        }
 
         // Description: The byte of immediate data is stored in \
            the specified register or memory byte ;
@@ -320,11 +536,12 @@ int Emulate8080Op(State8080 *state){
         
         // RAR Rotate Accumulator Right Through Carry
         // RAR
-        case 0x1f:
+        case 0x1f:{
             uint8_t tmp = state->cc.cy;
             state->cc.cy = state->a & 0b1;
             state->a = (state->a >> 1) | (tmp << 7);
             break;
+        }
 
         case 0x20: UnimplementedInstruction(state); break;
 
@@ -361,28 +578,79 @@ int Emulate8080Op(State8080 *state){
            Description: The 16-bit number held in the specified \
            register pair is incremented by one.
         // INX HL
-        case 0x23:
+        case 0x23:{
             uint16_t tmp = (state->h << 8) | state->l;
             tmp++;
             state->h = tmp >> 8;
             state->l = tmp & 0b11111111;
             break;
+        }
 
         // INR Increment Register or Memory
         // Description: The specified register or memory byte is \
            incremented by one.
         // INR H
-        case 0x24:
+        case 0x24:{
+            uint16_t res = state->h + 1;
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            if (res > 0b11111111)
+                state->cc.cy = 1;
+            else
+                state->cc.cy = 0;
+            
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
             state->h += 1;
+
             break;
+        }
 
         // DCR Decrement Register or Memory
         // Description: The specified register or memory byte is \
            decremented by one.
         // DCR H
-        case 0x25:
+        case 0x25:{
+            uint16_t res = state->h - 1;
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            if (res > 0b11111111)
+                state->cc.cy = 1;
+            else
+                state->cc.cy = 0;
+            
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
             state->h -= 1;
+
             break;
+        }
 
         // Description: The byte of immediate data is stored in \
            the specified register or memory byte ;
@@ -403,7 +671,7 @@ int Emulate8080Op(State8080 *state){
            registers using two's complement arithmetic. The result re- \
            places the contents of the Hand L registers.    
         // DAD HL
-        case 0x29:
+        case 0x29:{
             uint32_t tmp = ((state->h << 8) | state->l) << 1;
             state->h = (tmp >> 8) & 0b11111111;
             state->l = tmp & 0b11111111;
@@ -414,6 +682,7 @@ int Emulate8080Op(State8080 *state){
                 state->cc.cy = 0;
 
             break;
+        }
 
         // LHLD Load HAnd L Direct
         // Description: The byte at the memory address formed \
@@ -431,29 +700,79 @@ int Emulate8080Op(State8080 *state){
         // Description: The 16-bit number held in the specified \
            register pair is decremented by one.
         // DCX HL
-        case 0x2b:
+        case 0x2b:{
             uint16_t tmp = (state->h << 8) | state->l;
             tmp--;
             state->h = tmp >> 8;
             state->l = tmp & 0b11111111;
             break;
+        }
 
         // INR Increment Register or Memory
         // Description: The specified register or memory byte is \
            incremented by one.
         // INR L
-        case 0x2c:
-            state->l += 1;
-            break;
+        case 0x2c:{
+            uint16_t res = state->l + 1;
 
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            if (res > 0b11111111)
+                state->cc.cy = 1;
+            else
+                state->cc.cy = 0;
+            
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
+            state->l += 1;
+
+            break;
+        }
 
         // DCR Decrement Register or Memory
         // Description: The specified register or memory byte is \
            decremented by one.
         // DCR L
-        case 0x2d:
+        case 0x2d:{
+            uint16_t res = state->l - 1;
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            if (res > 0b11111111)
+                state->cc.cy = 1;
+            else
+                state->cc.cy = 0;
+            
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
             state->l -= 1;
+
             break;
+        }
 
         // Description: The byte of immediate data is stored in \
            the specified register or memory byte ;
@@ -511,17 +830,67 @@ int Emulate8080Op(State8080 *state){
         // Description: The specified register or memory byte is \
            incremented by one.
         // INR M (mem ref)
-        case 0x34: 
-            state->memory[((state->h) << 8) | state->l] += 1;
+        case 0x34:{ 
+            uint16_t res = state->memory[((state->h) << 8) | state->l]  + 1;
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            if (res > 0b11111111)
+                state->cc.cy = 1;
+            else
+                state->cc.cy = 0;
+            
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
+            state->memory[((state->h) << 8) | state->l]  += 1;
+
             break;
+        }
 
         // DCR Decrement Register or Memory
         // Description: The specified register or memory byte is \
            decremented by one.
         // DCR M (mem ref)
-        case 0x35: 
+        case 0x35: {
+            uint16_t res = state->memory[((state->h) << 8) | state->l] - 1;
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            if (res > 0b11111111)
+                state->cc.cy = 1;
+            else
+                state->cc.cy = 0;
+            
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
             state->memory[((state->h) << 8) | state->l] -= 1;
+
             break;
+        }
 
         // Description: The byte of immediate data is stored in \
            the specified register or memory byte ;
@@ -546,7 +915,7 @@ int Emulate8080Op(State8080 *state){
            registers using two's complement arithmetic. The result re- \
            places the contents of the Hand L registers.    
         // DAD SP
-        case 0x39:
+        case 0x39:{
             uint32_t tmp = state->sp + ((state->h << 8) | state->l);
             state->h = (tmp >> 8) & 0b11111111;
             state->l = tmp & 0b11111111;
@@ -557,6 +926,7 @@ int Emulate8080Op(State8080 *state){
                 state->cc.cy = 0;
             
             break;
+        }
 
         // LDA Load Accumulator Direct
         // Description: The byte at the memory address formed \
@@ -580,17 +950,67 @@ int Emulate8080Op(State8080 *state){
         // Description: The specified register or memory byte is \
            incremented by one.
         // INR A
-        case 0x3c:
+        case 0x3c:{
+            uint16_t res = state->a + 1;
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            if (res > 0b11111111)
+                state->cc.cy = 1;
+            else
+                state->cc.cy = 0;
+            
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
             state->a += 1;
+
             break;
+        }
 
         // DCR Decrement Register or Memory
         // Description: The specified register or memory byte is \
            decremented by one.
         // DCR A
-        case 0x3d:
+        case 0x3d:{
+            uint16_t res = state->a - 1;
+
+            // zero flag
+            if ((res & 0b11111111) == 0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (res & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
+            
+            // carry flag
+            if (res > 0b11111111)
+                state->cc.cy = 1;
+            else
+                state->cc.cy = 0;
+            
+            // parity flag
+            state->cc.p = parity(res & 0b11111111);
+
             state->a -= 1;
+
             break;
+        }
 
         // Description: The byte of immediate data is stored in \
            the specified register or memory byte ;
@@ -1315,7 +1735,7 @@ int Emulate8080Op(State8080 *state){
         // Description: The specified byte is added to the con· \
            tents of the accumulator using two's complement arithmetic.
         // ADD B
-        case 0x80:
+        case 0x80:{
             // do the math with higher precision for carry out \
                analysis
             uint16_t res = (uint16_t) state->a + (uint16_t) state->b;
@@ -1344,6 +1764,7 @@ int Emulate8080Op(State8080 *state){
             state->a = res & 0b11111111;
             
             break;
+        }
 
         // Instructions in this class operate on the accumulator \
            using the byte in the register specified by REG. If a memory \
@@ -1354,7 +1775,7 @@ int Emulate8080Op(State8080 *state){
         // Description: The specified byte is added to the con· \
            tents of the accumulator using two's complement arithmetic.
         // ADD C
-        case 0x81: 
+        case 0x81: {
             // do the math with higher precision for carry out \
                analysis
             uint16_t res = (uint16_t) state->a + (uint16_t) state->c;
@@ -1383,6 +1804,7 @@ int Emulate8080Op(State8080 *state){
             state->a = res & 0b11111111;
             
             break;
+        }
 
         // Instructions in this class operate on the accumulator \
            using the byte in the register specified by REG. If a memory \
@@ -1393,7 +1815,7 @@ int Emulate8080Op(State8080 *state){
         // Description: The specified byte is added to the con· \
            tents of the accumulator using two's complement arithmetic.
         // ADD D
-        case 0x82:
+        case 0x82:{
             // do the math with higher precision for carry out \
                analysis
             uint16_t res = (uint16_t) state->a + (uint16_t) state->d;
@@ -1422,6 +1844,7 @@ int Emulate8080Op(State8080 *state){
             state->a = res & 0b11111111;
             
             break;
+        }
 
         // Instructions in this class operate on the accumulator \
            using the byte in the register specified by REG. If a memory \
@@ -1432,7 +1855,7 @@ int Emulate8080Op(State8080 *state){
         // Description: The specified byte is added to the con· \
            tents of the accumulator using two's complement arithmetic.
         // ADD E
-        case 0x83:
+        case 0x83:{
             // do the math with higher precision for carry out \
                analysis
             uint16_t res = (uint16_t) state->a + (uint16_t) state->e;
@@ -1461,6 +1884,7 @@ int Emulate8080Op(State8080 *state){
             state->a = res & 0b11111111;
             
             break;
+        }
 
         // Instructions in this class operate on the accumulator \
            using the byte in the register specified by REG. If a memory \
@@ -1471,7 +1895,7 @@ int Emulate8080Op(State8080 *state){
         // Description: The specified byte is added to the con· \
            tents of the accumulator using two's complement arithmetic.
         // ADD H
-        case 0x84: 
+        case 0x84: {
             // do the math with higher precision for carry out \
                analysis
             uint16_t res = (uint16_t) state->a + (uint16_t) state->h;
@@ -1500,6 +1924,7 @@ int Emulate8080Op(State8080 *state){
             state->a = res & 0b11111111;
             
             break;
+        }
 
         // Instructions in this class operate on the accumulator \
            using the byte in the register specified by REG. If a memory \
@@ -1510,7 +1935,7 @@ int Emulate8080Op(State8080 *state){
         // Description: The specified byte is added to the con· \
            tents of the accumulator using two's complement arithmetic.
         // ADD L
-        case 0x85:
+        case 0x85:{
             // do the math with higher precision for carry out \
                analysis
             uint16_t res = (uint16_t) state->a + (uint16_t) state->l;
@@ -1539,6 +1964,7 @@ int Emulate8080Op(State8080 *state){
             state->a = res & 0b11111111;
             
             break;
+        }
 
         // Instructions in this class operate on the accumulator \
            using the byte in the register specified by REG. If a memory \
@@ -1549,7 +1975,7 @@ int Emulate8080Op(State8080 *state){
         // Description: The specified byte is added to the con· \
            tents of the accumulator using two's complement arithmetic.
         // ADD M (memory reference)
-        case 0x86:
+        case 0x86:{
             // do the math with higher precision for carry out \
                analysis
             uint16_t res = (uint16_t) state->a + (uint16_t) state->memory[(state->h << 8) | state->l];
@@ -1578,6 +2004,7 @@ int Emulate8080Op(State8080 *state){
             state->a = res & 0b11111111;
             
             break;
+        }
 
         // Instructions in this class operate on the accumulator \
            using the byte in the register specified by REG. If a memory \
@@ -1588,7 +2015,7 @@ int Emulate8080Op(State8080 *state){
         // Description: The specified byte is added to the con· \
            tents of the accumulator using two's complement arithmetic.
         // ADD A
-        case 0x87:
+        case 0x87:{
             // do the math with higher precision for carry out \
                analysis
             uint16_t res = (uint16_t) state->a + (uint16_t) state->a;
@@ -1617,10 +2044,12 @@ int Emulate8080Op(State8080 *state){
             // put result into accumulator
             state->a = res & 0b11111111;
             
-            break;            
+            break; 
+        }
+
         // Just like ADD, but addas carry out in the LSB if set
         // ADC B
-        case 0x88: 
+        case 0x88: {
             // do the math with higher precision for carry out \
                analysis
             uint16_t res = (uint16_t) state->a + (uint16_t) state->b + state->cc.cy;
@@ -1650,10 +2079,11 @@ int Emulate8080Op(State8080 *state){
             state->a = res & 0b11111111;
             
             break;  
+        }
 
         // Just like ADD, but addas carry out in the LSB if set
         // ADC C
-        case 0x89: 
+        case 0x89: {
             // do the math with higher precision for carry out \
                analysis
             uint16_t res = (uint16_t) state->a + (uint16_t) state->c + state->cc.cy;
@@ -1683,10 +2113,11 @@ int Emulate8080Op(State8080 *state){
             state->a = res & 0b11111111;
             
             break;  
+        }
 
         // Just like ADD, but addas carry out in the LSB if set
         // ADC D
-        case 0x8a: 
+        case 0x8a: {
             // do the math with higher precision for carry out \
                analysis
             uint16_t res = (uint16_t) state->a + (uint16_t) state->d + state->cc.cy;
@@ -1716,10 +2147,11 @@ int Emulate8080Op(State8080 *state){
             state->a = res & 0b11111111;
             
             break;  
+        }
 
         // Just like ADD, but addas carry out in the LSB if set
         // ADC E
-        case 0x8b: 
+        case 0x8b: {
             // do the math with higher precision for carry out \
                analysis
             uint16_t res = (uint16_t) state->a + (uint16_t) state->e + state->cc.cy;
@@ -1749,10 +2181,11 @@ int Emulate8080Op(State8080 *state){
             state->a = res & 0b11111111;
             
             break;  
+        }
 
         // Just like ADD, but addas carry out in the LSB if set
         // ADC H
-        case 0x8c: 
+        case 0x8c: {
             // do the math with higher precision for carry out \
                analysis
             uint16_t res = (uint16_t) state->a + (uint16_t) state->h + state->cc.cy;
@@ -1782,10 +2215,11 @@ int Emulate8080Op(State8080 *state){
             state->a = res & 0b11111111;
             
             break;  
+        }
 
         // Just like ADD, but addas carry out in the LSB if set
         // ADC L
-        case 0x8d: 
+        case 0x8d: {
             // do the math with higher precision for carry out \
                analysis
             uint16_t res = (uint16_t) state->a + (uint16_t) state->l + state->cc.cy;
@@ -1815,10 +2249,11 @@ int Emulate8080Op(State8080 *state){
             state->a = res & 0b11111111;
             
             break;  
+        }
 
         // Just like ADD, but addas carry out in the LSB if set
         // ADC M (mem ref)
-        case 0x8e: 
+        case 0x8e: {
             // do the math with higher precision for carry out \
                analysis
             uint16_t res = (uint16_t) state->a + state->memory[(state->h << 8) | state->l] + state->cc.cy;
@@ -1848,10 +2283,11 @@ int Emulate8080Op(State8080 *state){
             state->a = res & 0b11111111;
             
             break;  
+        }
 
         // Just like ADD, but addas carry out in the LSB if set
         // ADC A
-        case 0x8f:
+        case 0x8f:{
             // do the math with higher precision for carry out \
                analysis
             uint16_t res = (uint16_t) state->a + (uint16_t) state->a + state->cc.cy;
@@ -1881,11 +2317,12 @@ int Emulate8080Op(State8080 *state){
             state->a = res & 0b11111111;
             
             break; 
+        }
         
         // Description: The specified byte is subtracted from the \
            accumulator using two's complement arithmetic.
         // SUB B
-        case 0x90: 
+        case 0x90: {
             uint16_t res = (uint16_t) state->a - (uint16_t) state->b;
 
             // zero flag
@@ -1913,11 +2350,12 @@ int Emulate8080Op(State8080 *state){
             state->a = res & 0b11111111;
 
             break;
+        }
 
         // Description: The specified byte is subtracted from the \
            accumulator using two's complement arithmetic.
         // SUB C
-        case 0x91: 
+        case 0x91: {
             uint16_t res = (uint16_t) state->a - (uint16_t) state->c;
 
             // zero flag
@@ -1945,11 +2383,12 @@ int Emulate8080Op(State8080 *state){
             state->a = res & 0b11111111;
 
             break;
+        }
 
         // Description: The specified byte is subtracted from the \
            accumulator using two's complement arithmetic.
         // SUB D
-        case 0x92: 
+        case 0x92: {
             uint16_t res = (uint16_t) state->a - (uint16_t) state->d;
 
             // zero flag
@@ -1977,11 +2416,12 @@ int Emulate8080Op(State8080 *state){
             state->a = res & 0b11111111;
 
             break;
+        }
 
         // Description: The specified byte is subtracted from the \
            accumulator using two's complement arithmetic.
         // SUB E
-        case 0x93: 
+        case 0x93: {
             uint16_t res = (uint16_t) state->a - (uint16_t) state->e;
 
             // zero flag
@@ -2009,11 +2449,12 @@ int Emulate8080Op(State8080 *state){
             state->a = res & 0b11111111;
 
             break;
+        }
 
         // Description: The specified byte is subtracted from the \
            accumulator using two's complement arithmetic.
         // SUB H
-        case 0x94: 
+        case 0x94: {
             uint16_t res = (uint16_t) state->a - (uint16_t) state->h;
 
             // zero flag
@@ -2041,11 +2482,12 @@ int Emulate8080Op(State8080 *state){
             state->a = res & 0b11111111;
 
             break;
+        }
 
         // Description: The specified byte is subtracted from the \
            accumulator using two's complement arithmetic.
         // SUB L
-        case 0x95: 
+        case 0x95: {
             uint16_t res = (uint16_t) state->a - (uint16_t) state->l;
 
             // zero flag
@@ -2073,11 +2515,12 @@ int Emulate8080Op(State8080 *state){
             state->a = res & 0b11111111;
 
             break;
+        }
 
         // Description: The specified byte is subtracted from the \
            accumulator using two's complement arithmetic.
         // SUB M (mem ref)
-        case 0x96: 
+        case 0x96: {
             uint16_t res = (uint16_t) state->a - state->memory[(state->h << 8) | state->l];
 
             // zero flag
@@ -2105,11 +2548,12 @@ int Emulate8080Op(State8080 *state){
             state->a = res & 0b11111111;
 
             break;
+        }
 
         // Description: The specified byte is subtracted from the \
            accumulator using two's complement arithmetic.
         // SUB A
-        case 0x97: 
+        case 0x97: {
             uint16_t res = (uint16_t) state->a - (uint16_t) state->a;
 
             // zero flag
@@ -2137,6 +2581,7 @@ int Emulate8080Op(State8080 *state){
             state->a = res & 0b11111111;
 
             break;
+        }
 
         // SBB Subtract Register or Memory From \
            Accumulator With Borrow
@@ -2144,7 +2589,7 @@ int Emulate8080Op(State8080 *state){
            contents of the specified byte. This value is then subtracted \
            from the accumulator using two's complement arithmetic.
         // SBB B
-        case 0x98: 
+        case 0x98: {
             uint16_t res = (uint16_t) state->a - ((uint16_t) state->b + state->cc.cy);
 
             // zero flag
@@ -2172,6 +2617,7 @@ int Emulate8080Op(State8080 *state){
             state->a = res & 0b11111111;
 
             break;
+        }
 
         // SBB Subtract Register or Memory From \
            Accumulator With Borrow
@@ -2179,7 +2625,7 @@ int Emulate8080Op(State8080 *state){
            contents of the specified byte. This value is then subtracted \
            from the accumulator using two's complement arithmetic.
         // SBB C
-        case 0x99:
+        case 0x99:{
             uint16_t res = (uint16_t) state->a - ((uint16_t) state->c + state->cc.cy);
 
             // zero flag
@@ -2206,13 +2652,16 @@ int Emulate8080Op(State8080 *state){
             // put result into accumulator
             state->a = res & 0b11111111;
 
+            break;
+        }
+
         // SBB Subtract Register or Memory From \
            Accumulator With Borrow
         // Description: The Carry bit is internally added to the \
            contents of the specified byte. This value is then subtracted \
            from the accumulator using two's complement arithmetic.
         // SBB D
-        case 0x9a: 
+        case 0x9a: {
             uint16_t res = (uint16_t) state->a - ((uint16_t) state->d + state->cc.cy);
 
             // zero flag
@@ -2240,6 +2689,7 @@ int Emulate8080Op(State8080 *state){
             state->a = res & 0b11111111;
 
             break;
+        }
 
         // SBB Subtract Register or Memory From \
            Accumulator With Borrow
@@ -2247,7 +2697,7 @@ int Emulate8080Op(State8080 *state){
            contents of the specified byte. This value is then subtracted \
            from the accumulator using two's complement arithmetic.
         // SBB E
-        case 0x9b: 
+        case 0x9b: {
             uint16_t res = (uint16_t) state->a - ((uint16_t) state->e + state->cc.cy);
 
             // zero flag
@@ -2275,6 +2725,7 @@ int Emulate8080Op(State8080 *state){
             state->a = res & 0b11111111;
 
             break;
+        }
 
         // SBB Subtract Register or Memory From \
            Accumulator With Borrow
@@ -2282,7 +2733,7 @@ int Emulate8080Op(State8080 *state){
            contents of the specified byte. This value is then subtracted \
            from the accumulator using two's complement arithmetic.
         // SBB H
-        case 0x9c:
+        case 0x9c:{
             uint16_t res = (uint16_t) state->a - ((uint16_t) state->h + state->cc.cy);
 
             // zero flag
@@ -2310,6 +2761,7 @@ int Emulate8080Op(State8080 *state){
             state->a = res & 0b11111111;
 
             break;
+        }
 
         // SBB Subtract Register or Memory From \
            Accumulator With Borrow
@@ -2317,7 +2769,7 @@ int Emulate8080Op(State8080 *state){
            contents of the specified byte. This value is then subtracted \
            from the accumulator using two's complement arithmetic.
         // SBB L
-        case 0x9d: 
+        case 0x9d: {
             uint16_t res = (uint16_t) state->a - ((uint16_t) state->l + state->cc.cy);
 
             // zero flag
@@ -2345,6 +2797,7 @@ int Emulate8080Op(State8080 *state){
             state->a = res & 0b11111111;
 
             break;
+        }
 
         // SBB Subtract Register or Memory From \
            Accumulator With Borrow
@@ -2352,7 +2805,7 @@ int Emulate8080Op(State8080 *state){
            contents of the specified byte. This value is then subtracted \
            from the accumulator using two's complement arithmetic.
         // SBB M (mem ref)
-        case 0x9e: 
+        case 0x9e: {
             uint16_t res = (uint16_t) state->a - (state->memory[(state->h << 8) | state->l] + state->cc.cy);   // ((uint16_t) state->b + state->cc.cy);
 
             // zero flag
@@ -2380,6 +2833,7 @@ int Emulate8080Op(State8080 *state){
             state->a = res & 0b11111111;
 
             break;
+        }
 
         // SBB Subtract Register or Memory From \
            Accumulator With Borrow
@@ -2387,7 +2841,7 @@ int Emulate8080Op(State8080 *state){
            contents of the specified byte. This value is then subtracted \
            from the accumulator using two's complement arithmetic.
         // SBB A
-        case 0x9f: 
+        case 0x9f: {
             uint16_t res = (uint16_t) state->a - ((uint16_t) state->a + state->cc.cy);
 
             // zero flag
@@ -2415,6 +2869,7 @@ int Emulate8080Op(State8080 *state){
             state->a = res & 0b11111111;
 
             break;
+        }
 
         // ANA Logical and Register or Memory \
            With Accumulator
@@ -3125,7 +3580,7 @@ int Emulate8080Op(State8080 *state){
            contents of REG are greater than the contents of the accu- \
            mulator, and reset otherwise.
         // CMP B
-        case 0xb8: 
+        case 0xb8: {
             uint16_t res = (uint16_t) state->a - (uint16_t) state->b;
 
             // zero flag
@@ -3150,6 +3605,7 @@ int Emulate8080Op(State8080 *state){
             state->cc.p = parity(res & 0b11111111);
 
             break;
+        }
 
         // CMP Compare Register or Memory \
            With Accumulator
@@ -3164,7 +3620,7 @@ int Emulate8080Op(State8080 *state){
            contents of REG are greater than the contents of the accu- \
            mulator, and reset otherwise.
         // CMP C
-        case 0xb9: 
+        case 0xb9: {
             uint16_t res = (uint16_t) state->a - (uint16_t) state->c;
 
             // zero flag
@@ -3189,6 +3645,7 @@ int Emulate8080Op(State8080 *state){
             state->cc.p = parity(res & 0b11111111);
 
             break;
+        }
 
         // CMP Compare Register or Memory \
            With Accumulator
@@ -3203,7 +3660,7 @@ int Emulate8080Op(State8080 *state){
            contents of REG are greater than the contents of the accu- \
            mulator, and reset otherwise.
         // CMP D
-        case 0xba: 
+        case 0xba: {
             uint16_t res = (uint16_t) state->a - (uint16_t) state->d;
 
             // zero flag
@@ -3228,6 +3685,7 @@ int Emulate8080Op(State8080 *state){
             state->cc.p = parity(res & 0b11111111);
 
             break;
+        }
 
         // CMP Compare Register or Memory \
            With Accumulator
@@ -3242,7 +3700,7 @@ int Emulate8080Op(State8080 *state){
            contents of REG are greater than the contents of the accu- \
            mulator, and reset otherwise.
         // CMP E
-        case 0xbb:
+        case 0xbb:{
             uint16_t res = (uint16_t) state->a - (uint16_t) state->e;
 
             // zero flag
@@ -3267,6 +3725,7 @@ int Emulate8080Op(State8080 *state){
             state->cc.p = parity(res & 0b11111111);
 
             break;
+        }
 
         // CMP Compare Register or Memory \
            With Accumulator
@@ -3281,7 +3740,7 @@ int Emulate8080Op(State8080 *state){
            contents of REG are greater than the contents of the accu- \
            mulator, and reset otherwise.
         // CMP H
-        case 0xbc: 
+        case 0xbc: {
             uint16_t res = (uint16_t) state->a - (uint16_t) state->h;
 
             // zero flag
@@ -3306,6 +3765,7 @@ int Emulate8080Op(State8080 *state){
             state->cc.p = parity(res & 0b11111111);
 
             break;
+        }
 
         // CMP Compare Register or Memory \
            With Accumulator
@@ -3320,7 +3780,7 @@ int Emulate8080Op(State8080 *state){
            contents of REG are greater than the contents of the accu- \
            mulator, and reset otherwise.
         // CMP L
-        case 0xbd: 
+        case 0xbd: {
             uint16_t res = (uint16_t) state->a - (uint16_t) state->l;
 
             // zero flag
@@ -3345,6 +3805,7 @@ int Emulate8080Op(State8080 *state){
             state->cc.p = parity(res & 0b11111111);
 
             break;
+        }
 
         // CMP Compare Register or Memory \
            With Accumulator
@@ -3359,7 +3820,7 @@ int Emulate8080Op(State8080 *state){
            contents of REG are greater than the contents of the accu- \
            mulator, and reset otherwise.
         // CMP M (mem ref)
-        case 0xbe: 
+        case 0xbe: {
             uint16_t res = (uint16_t) state->a - (uint16_t) state->memory[(state->h << 8) | state->l];
 
             // zero flag
@@ -3384,6 +3845,7 @@ int Emulate8080Op(State8080 *state){
             state->cc.p = parity(res & 0b11111111);
 
             break;
+        }
 
         // CMP Compare Register or Memory \
            With Accumulator
@@ -3398,7 +3860,7 @@ int Emulate8080Op(State8080 *state){
            contents of REG are greater than the contents of the accu- \
            mulator, and reset otherwise.
         // CMP A
-        case 0xbf:
+        case 0xbf:{
             uint16_t res = (uint16_t) state->a - (uint16_t) state->a;
 
             // zero flag
@@ -3423,6 +3885,7 @@ int Emulate8080Op(State8080 *state){
             state->cc.p = parity(res & 0b11111111);
 
             break;
+        }
 
         // RNZ Return If Not Zero
         // Description: If the Zero bit is zero, a return operation \
@@ -3431,6 +3894,7 @@ int Emulate8080Op(State8080 *state){
         case 0xc0:
             if (!(state->cc.z)){
                 state->pc = state->memory[state->sp] | (state->memory[state->sp+1] << 8);
+                state->pc--;
                 state->sp += 2;
             }
 
@@ -3448,11 +3912,13 @@ int Emulate8080Op(State8080 *state){
            tion continues at the memory address adr.
         // JNZ
         case 0xc2:
-            if (!(state->cc.z))
+            if (!(state->cc.z)){
                 state->pc = (opcode[2] << 8) | opcode[1];
+                state->pc--;
+            }
             else
                 state->pc += 2;
-            
+
             break;
 
         // JMP JUMP
@@ -3461,6 +3927,7 @@ int Emulate8080Op(State8080 *state){
         // JMP
         case 0xc3:
             state->pc =(opcode[2] << 8) | opcode[1];
+            state->pc--;
             break;
 
         // CNZ Call If Not Zero
@@ -3469,10 +3936,11 @@ int Emulate8080Op(State8080 *state){
         // CNZ
         case 0xc4:
             if (state->cc.z){
-                state->memory[state->sp-1] = ((state->pc+2) >> 8) & 0b11111111;
-                state->memory[state->sp-2] = (state->pc+2) & 0b11111111;
+                state->memory[state->sp - 1] = state->memory[state->pc + 2];
+                state->memory[state->sp - 2] = state->memory[state->pc + 1];
                 state->sp -= 2;
                 state->pc = ((opcode[2]) << 8) | opcode[1];
+                state->pc--;
             }
             else
                 state->pc += 2;
@@ -3493,7 +3961,7 @@ int Emulate8080Op(State8080 *state){
            the contents of the accumulator using two's complement \
            arithmetic.
         // ADI
-        case 0xc6: 
+        case 0xc6: {
             uint16_t res = (uint16_t) state->a + (uint16_t) opcode[1];
             
             // zero flag
@@ -3521,6 +3989,7 @@ int Emulate8080Op(State8080 *state){
             state->pc += 1;
 
             break;
+        }
         case 0xc7: UnimplementedInstruction(state); break;
         
         // RZ Return If Zero
@@ -3530,6 +3999,7 @@ int Emulate8080Op(State8080 *state){
         case 0xc8:
             if (state->cc.z){
                 state->pc = state->memory[state->sp] | (state->memory[state->sp+1] << 8);
+                state->pc--;
                 state->sp += 2;
             }
 
@@ -3540,7 +4010,9 @@ int Emulate8080Op(State8080 *state){
            performed.
         // RET
         case 0xc9:
+            // first byte is LSB, second is MSB
             state->pc = state->memory[state->sp] | (state->memory[state->sp-1] << 8);
+            state->pc--;
             state->sp += 2;
             break;
 
@@ -3549,11 +4021,13 @@ int Emulate8080Op(State8080 *state){
            continues at the memory address adr.
         // JZ
         case 0xca:
-            if (state->cc.z)
+            if (state->cc.z){
                 state->pc = (opcode[2] << 8) | opcode[1];
+                state->pc--;
+            }
             else
                 state->pc += 2;
-            
+
             break;
 
         case 0xcb: UnimplementedInstruction(state); break;
@@ -3564,10 +4038,11 @@ int Emulate8080Op(State8080 *state){
         // CZ
         case 0xcc:
             if (!(state->cc.z)){
-                state->memory[state->sp-1] = ((state->pc+2) >> 8) & 0b11111111;
-                state->memory[state->sp-2] = (state->pc+2) & 0b11111111;
+                state->memory[state->sp - 1] = state->memory[state->pc + 2];
+                state->memory[state->sp - 2] = state->memory[state->pc + 1];
                 state->sp -= 2;
                 state->pc = (opcode[2] << 8) | opcode[1];
+                state->pc--;
             }
             else
                 state->pc += 2;
@@ -3578,10 +4053,11 @@ int Emulate8080Op(State8080 *state){
            formed to subroutine sub.
         // CALL
         case 0xcd:
-            state->memory[state->sp - 1] = ((state->pc + 2) >> 8) & 0b11111111;
-            state->memory[state->sp - 2] = (state->pc + 2) & 0b11111111;
+            state->memory[state->sp - 1] = state->memory[state->pc + 2];
+            state->memory[state->sp - 2] = state->memory[state->pc + 1];
             state->sp -= 2;
             state->pc = (opcode[2] << 8) | opcode[1];
+            state->pc--;
 
             break;
 
@@ -3590,7 +4066,7 @@ int Emulate8080Op(State8080 *state){
            the contents of the accumulator plus the contents of the \
            carry bit.
         // ACI
-        case 0xce:
+        case 0xce:{
             uint16_t res = (uint16_t) state->a + (uint16_t) opcode[1] + state->cc.cy;
 
             // zero flag
@@ -3618,6 +4094,7 @@ int Emulate8080Op(State8080 *state){
             state->pc += 1;
 
             break;
+        }
 
         case 0xcf: UnimplementedInstruction(state); break;
 
@@ -3628,6 +4105,7 @@ int Emulate8080Op(State8080 *state){
         case 0xd0:
             if (!(state->cc.cy)){
                 state->pc = state->memory[state->sp] | (state->memory[state->sp+1] << 8);
+                state->pc--;
                 state->sp += 2;
             }
             break;            
@@ -3645,11 +4123,13 @@ int Emulate8080Op(State8080 *state){
            tion continues at the memory address adr.
         // JNC
         case 0xd2: 
-            if (!(state->cc.cy))
+            if (!(state->cc.cy)){
                 state->pc = (opcode[2] << 8) | opcode[1];
+                state->pc--;
+            }
             else
                 state->pc += 2;
-
+            
             break;
 
         // OUT Output
@@ -3667,10 +4147,11 @@ int Emulate8080Op(State8080 *state){
         // CNC
         case 0xd4: 
             if (!(state->cc.cy)){
-                state->memory[state->sp-1] = ((state->pc+2) >> 8) & 0b11111111;
-                state->memory[state->sp-2] = (state->pc+2) & 0b11111111;
+                state->memory[state->sp - 1] = state->memory[state->pc + 2];
+                state->memory[state->sp - 2] = state->memory[state->pc + 1];
                 state->sp -= 2;
                 state->pc = (opcode[2] << 8) | opcode[1];
+                state->pc--;
             }
             else
                 state->pc += 2;
@@ -3694,7 +4175,7 @@ int Emulate8080Op(State8080 *state){
            set, indicati ng a borrow, if there is no carry out of the high- \
            order bit position, and reset if there is a carry out.
         // 
-        case 0xd6: 
+        case 0xd6: {
             uint16_t res = (uint16_t) state->a - (uint16_t) opcode[1];
 
             // zero flag
@@ -3723,6 +4204,7 @@ int Emulate8080Op(State8080 *state){
             state->pc += 1;
 
             break;
+        }
 
         case 0xd7: UnimplementedInstruction(state); break;
 
@@ -3733,6 +4215,7 @@ int Emulate8080Op(State8080 *state){
         case 0xd8:
             if (state->cc.cy){
                 state->pc = state->memory[state->sp] | (state->memory[state->sp+1] << 8);
+                state->pc--;
                 state->sp += 2;
             }
 
@@ -3745,8 +4228,10 @@ int Emulate8080Op(State8080 *state){
            tion conti nues at the memory address adr.
         // JC
         case 0xda:
-            if (state->cc.cy)
+            if (state->cc.cy){
                 state->pc = (opcode[2] << 8) | opcode[1];
+                state->pc--;
+            }
             else
                 state->pc += 2;
             
@@ -3768,10 +4253,11 @@ int Emulate8080Op(State8080 *state){
         // CC
         case 0xdc:
             if (state->cc.cy){
-                state->memory[state->sp-1] = ((state->pc+2) >> 8) & 0b11111111;
-                state->memory[state->sp-2] = (state->pc+2) & 0b11111111;
+                state->memory[state->sp - 1] = state->memory[state->pc + 2];
+                state->memory[state->sp - 2] = state->memory[state->pc + 1];
                 state->sp -= 2;
                 state->pc = ((opcode[2]) << 8) | opcode[1];
+                state->pc--;
             }
             else
                 state->pc += 2;
@@ -3785,7 +4271,7 @@ int Emulate8080Op(State8080 *state){
            byte of immediate data. This value is then subtracted from \
            the accumulator using two's complement arithmetic.
         // SBI
-        case 0xde: 
+        case 0xde: {
             uint16_t res = (uint16_t) state->a - ((uint16_t) opcode[1] + state->cc.cy);
 
             // zero flag
@@ -3814,6 +4300,7 @@ int Emulate8080Op(State8080 *state){
             state->pc += 1;
 
             break;
+        }
 
         case 0xdf: UnimplementedInstruction(state); break;
 
@@ -3824,6 +4311,7 @@ int Emulate8080Op(State8080 *state){
         case 0xe0:
             if (!(state->cc.p)){
                 state->pc = state->memory[state->sp] | (state->memory[state->sp+1] << 8);
+                state->pc--;
                 state->sp += 2;
             }
             break;
@@ -3842,8 +4330,10 @@ int Emulate8080Op(State8080 *state){
            memory address adr.
         // JPO
         case 0xe2:
-            if (!(state->cc.p))
+            if (!(state->cc.p)){
                 state->pc = (opcode[2] << 8) | opcode[1];
+                state->pc--;
+            }
             else
                 state->pc += 2;
             
@@ -3856,7 +4346,7 @@ int Emulate8080Op(State8080 *state){
            byte whose address is one greater than that held in the stack \
            pointer.
         // XTHL
-        case 0xe3:
+        case 0xe3:{
             uint8_t L = state->l;
             uint8_t H = state->h;
 
@@ -3865,6 +4355,7 @@ int Emulate8080Op(State8080 *state){
             state->memory[state->sp] = L;
             state->memory[state->sp+1] = H;
             break;
+        }
 
         // CPO Call If Parity Odd
         // Description: If the Parity bit is zero (indicating odd \
@@ -3872,10 +4363,11 @@ int Emulate8080Op(State8080 *state){
         // CPO
         case 0xe4:
             if (!(state->cc.p)){
-                state->memory[state->sp-1] = ((state->pc+2) >> 8) & 0b11111111;
-                state->memory[state->sp-2] = (state->pc+2) & 0b11111111;
+                state->memory[state->sp - 1] = state->memory[state->pc + 2];
+                state->memory[state->sp - 2] = state->memory[state->pc + 1];
                 state->sp -= 2;
                 state->pc = ((opcode[2]) << 8) | opcode[1];
+                state->pc--;
             }
             else
                 state->pc += 2;
@@ -3931,6 +4423,7 @@ int Emulate8080Op(State8080 *state){
         case 0xe8:
             if (state->cc.p){
                 state->pc = state->memory[state->sp] | (state->memory[state->sp+1] << 8);
+                state->pc--;
                 state->sp += 2;
             }
             break;
@@ -3944,6 +4437,7 @@ int Emulate8080Op(State8080 *state){
         // PCHL
         case 0xe9:
             state->pc = (state->h << 8) | state->l;
+            state->pc--;
 
             break;
         
@@ -3953,8 +4447,10 @@ int Emulate8080Op(State8080 *state){
            ory address adr.
         // JPE
         case 0xea: 
-            if (state->cc.p)
+            if (state->cc.p){
                 state->pc = (opcode[2] << 8) | opcode[1];
+                state->pc--;
+            }
             else
                 state->pc += 2;
 
@@ -3965,7 +4461,7 @@ int Emulate8080Op(State8080 *state){
            registers are exchanged with the 16 bits of data held in the \
            D and E registers.
         // XCHG
-        case 0xeb:
+        case 0xeb:{
             uint8_t H = state->h;
             uint8_t L = state->l;
 
@@ -3975,6 +4471,7 @@ int Emulate8080Op(State8080 *state){
             state->e = L;
 
             break;
+        }
 
         // CPE Call If Parity Even
         // Description: If the Parity bit is one (indicating even \
@@ -3982,10 +4479,11 @@ int Emulate8080Op(State8080 *state){
         // CPE
         case 0xec:
             if (state->cc.p){
-                state->memory[state->sp-1] = ((state->pc+2) >> 8) & 0b11111111;
-                state->memory[state->sp-2] = (state->pc+2) & 0b11111111;
+                state->memory[state->sp - 1] = state->memory[state->pc + 2];
+                state->memory[state->sp - 2] = state->memory[state->pc + 1];
                 state->sp -= 2;
                 state->pc = ((opcode[2]) << 8) | opcode[1];
+                state->pc--;
             }
             else
                 state->pc += 2;
@@ -4033,13 +4531,14 @@ int Emulate8080Op(State8080 *state){
         case 0xf0: 
             if (!(state->cc.s)){
                 state->pc = state->memory[state->sp] | (state->memory[state->sp+1] << 8);
+                state->pc--;
                 state->sp += 2;
             }
             break;
 
         // POP Pop Data Off Stack
         // POP PSW
-        case 0xf1:
+        case 0xf1:{
             state->a = state->memory[state->sp];
             uint8_t fl = state->memory[state->sp+1];
             
@@ -4050,6 +4549,7 @@ int Emulate8080Op(State8080 *state){
 
             state->sp += 2;
             break;
+        }
 
         // JP Jump If Positive
         // Description: If the sign bit is zero, (indicating a posi- \
@@ -4057,8 +4557,10 @@ int Emulate8080Op(State8080 *state){
            address adr.
         // JP
         case 0xf2:
-            if (!(state->cc.s))
+            if (!(state->cc.s)){
                 state->pc = (opcode[2] << 8) | opcode[1];
+                state->pc--;
+            }
             else
                 state->pc += 2;
 
@@ -4078,10 +4580,11 @@ int Emulate8080Op(State8080 *state){
         // CP
         case 0xf4:
             if (!(state->cc.s)){
-                state->memory[state->sp-1] = ((state->pc+2) >> 8) & 0b11111111;
-                state->memory[state->sp-2] = (state->pc+2) & 0b11111111;
+                state->memory[state->sp - 1] = state->memory[state->pc + 2];
+                state->memory[state->sp - 2] = state->memory[state->pc + 1];
                 state->sp -= 2;
                 state->pc = ((opcode[2]) << 8) | opcode[1];
+                state->pc--;
             }
             else
                 state->pc += 2;
@@ -4138,6 +4641,7 @@ int Emulate8080Op(State8080 *state){
         case 0xf8:
             if (state->cc.s){
                 state->pc = state->memory[state->sp] | (state->memory[state->sp+1] << 8);
+                state->pc--;
                 state->sp += 2;
             }
 
@@ -4158,8 +4662,10 @@ int Emulate8080Op(State8080 *state){
            address adr.
         // JM
         case 0xfa:
-            if (state->cc.s)
+            if (state->cc.s){
                 state->pc = (opcode[2] << 8) | opcode[1];
+                state->pc--;
+            }
             else
                 state->pc += 2;
 
@@ -4178,10 +4684,11 @@ int Emulate8080Op(State8080 *state){
         // CM
         case 0xfc: 
             if (state->cc.s){
-                state->memory[state->sp-1] = ((state->pc+2) >> 8) & 0b11111111;
-                state->memory[state->sp-2] = (state->pc+2) & 0b11111111;
+                state->memory[state->sp - 1] = state->memory[state->pc + 2];
+                state->memory[state->sp - 2] = state->memory[state->pc + 1];
                 state->sp -= 2;
                 state->pc = ((opcode[2]) << 8) | opcode[1];
+                state->pc--;
             }
             else
                 state->pc += 2;
@@ -4194,7 +4701,7 @@ int Emulate8080Op(State8080 *state){
         // Description: The byte of immediate data is compared \
            to the contents of the accumulator.
         // CPI
-        case 0xfe:
+        case 0xfe:{
             uint16_t res = (uint16_t) state->a - (uint16_t) opcode[1];
 
             // zero flag
@@ -4221,10 +4728,95 @@ int Emulate8080Op(State8080 *state){
             state->pc += 1;
 
             break;
+        }
 
         case 0xff: UnimplementedInstruction(state); break;
+
+        // if no instruction is found
+        default:
+            printf("ERROR. Instruction not found \nstate->pc = %d \n*opcode = %d", state->pc, *opcode);
     }
     state->pc++;
+}
 
+int main(int argc, char *argv[]){
+    if (argc < 2){
+        printf("ROM file is missing\n");
+        exit(1);
+    }
 
+    FILE *f;
+    f = fopen(argv[1], "rb");
+    if (f == NULL){
+        printf("Error opening file");
+        exit(EXIT_FAILURE);
+    }    
+
+    // find file size and put it into buffer
+    fseek(f, 0L, SEEK_END);
+    int fsize = ftell(f);
+    fseek(f, 0L, SEEK_SET);
+
+    // allocating memory for information to be stored from file
+    unsigned char *buffer = (unsigned char *)malloc(fsize);
+    if (buffer == NULL){
+        printf("Error alocating buffer");
+        fclose(f);
+        exit(1);
+    }
+
+    fread(buffer, fsize, 1, f);
+    fclose(f);
+
+    // allocating memory for the emulator's state
+    State8080 *state = (State8080 *)malloc(sizeof(State8080));
+    if (state == NULL){
+        printf("state has not initialized properly\n");
+        free(state);
+        free(buffer);
+        exit(1);
+    }
+
+    // allocating memory for emulator, 64 kb
+    state->memory = (uint8_t *)malloc(65536);
+    if (state->memory == NULL){
+        printf("Error allocating emulator's memory\n");
+        free(state);
+        free(buffer);
+        exit(1);
+    }
+
+    // initizlizing emulated hardware and condition flags
+    state->cc.z = 0;  
+    state->cc.s = 0;  
+    state->cc.p = 0;  
+    state->cc.cy = 0; 
+    state->cc.ac = 0; 
+    state->cc.pad = 0;
+    state->a = 0;
+    state->b = 0;
+    state->c = 0;
+    state->d = 0;
+    state->e = 0;
+    state->h = 0;
+    state->l = 0;
+    state->sp = 0;
+
+    // writing ROM into memory
+    for (int i = 0; i < fsize; i ++)
+        state->memory[i] = buffer[i];
+    
+    free(buffer);
+    
+    // starting emulator
+    state->pc = 0;
+    while (state->pc < fsize){
+        Disassemble(state->memory, state->pc);
+        Emulate8080Op(state);
+    }
+    
+    free(state->memory);
+    free(state);
+
+    return 0;
 }
