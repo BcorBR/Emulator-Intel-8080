@@ -3936,8 +3936,8 @@ int Emulate8080Op(State8080 *state){
         // CNZ
         case 0xc4:
             if (state->cc.z){
-                state->memory[state->sp - 1] = state->memory[state->pc + 2];
-                state->memory[state->sp - 2] = state->memory[state->pc + 1];
+                state->memory[state->sp - 1] = ((state->pc+3) >> 8) & 0b11111111;
+                state->memory[state->sp - 2] =  (state->pc+3) & 0b11111111;
                 state->sp -= 2;
                 state->pc = ((opcode[2]) << 8) | opcode[1];
                 state->pc--;
@@ -4011,7 +4011,7 @@ int Emulate8080Op(State8080 *state){
         // RET
         case 0xc9:
             // first byte is LSB, second is MSB
-            state->pc = state->memory[state->sp] | (state->memory[state->sp-1] << 8);
+            state->pc = state->memory[state->sp] | (state->memory[state->sp+1] << 8);
             state->pc--;
             state->sp += 2;
             break;
@@ -4038,8 +4038,8 @@ int Emulate8080Op(State8080 *state){
         // CZ
         case 0xcc:
             if (!(state->cc.z)){
-                state->memory[state->sp - 1] = state->memory[state->pc + 2];
-                state->memory[state->sp - 2] = state->memory[state->pc + 1];
+                state->memory[state->sp - 1] = ((state->pc+3) >> 8) & 0b11111111;
+                state->memory[state->sp - 2] =  (state->pc+3) & 0b11111111;
                 state->sp -= 2;
                 state->pc = (opcode[2] << 8) | opcode[1];
                 state->pc--;
@@ -4053,8 +4053,8 @@ int Emulate8080Op(State8080 *state){
            formed to subroutine sub.
         // CALL
         case 0xcd:
-            state->memory[state->sp - 1] = state->memory[state->pc + 2];
-            state->memory[state->sp - 2] = state->memory[state->pc + 1];
+            state->memory[state->sp - 1] = ((state->pc+3) >> 8) & 0b11111111;
+            state->memory[state->sp - 2] =  (state->pc+3) & 0b11111111;
             state->sp -= 2;
             state->pc = (opcode[2] << 8) | opcode[1];
             state->pc--;
@@ -4147,8 +4147,8 @@ int Emulate8080Op(State8080 *state){
         // CNC
         case 0xd4: 
             if (!(state->cc.cy)){
-                state->memory[state->sp - 1] = state->memory[state->pc + 2];
-                state->memory[state->sp - 2] = state->memory[state->pc + 1];
+                state->memory[state->sp - 1] = ((state->pc+3) >> 8) & 0b11111111;
+                state->memory[state->sp - 2] =  (state->pc+3) & 0b11111111;
                 state->sp -= 2;
                 state->pc = (opcode[2] << 8) | opcode[1];
                 state->pc--;
@@ -4253,8 +4253,8 @@ int Emulate8080Op(State8080 *state){
         // CC
         case 0xdc:
             if (state->cc.cy){
-                state->memory[state->sp - 1] = state->memory[state->pc + 2];
-                state->memory[state->sp - 2] = state->memory[state->pc + 1];
+                state->memory[state->sp - 1] = ((state->pc+3) >> 8) & 0b11111111;
+                state->memory[state->sp - 2] =  (state->pc+3) & 0b11111111;
                 state->sp -= 2;
                 state->pc = ((opcode[2]) << 8) | opcode[1];
                 state->pc--;
@@ -4363,8 +4363,8 @@ int Emulate8080Op(State8080 *state){
         // CPO
         case 0xe4:
             if (!(state->cc.p)){
-                state->memory[state->sp - 1] = state->memory[state->pc + 2];
-                state->memory[state->sp - 2] = state->memory[state->pc + 1];
+                state->memory[state->sp - 1] = ((state->pc+3) >> 8) & 0b11111111;
+                state->memory[state->sp - 2] =  (state->pc+3) & 0b11111111;
                 state->sp -= 2;
                 state->pc = ((opcode[2]) << 8) | opcode[1];
                 state->pc--;
@@ -4479,8 +4479,8 @@ int Emulate8080Op(State8080 *state){
         // CPE
         case 0xec:
             if (state->cc.p){
-                state->memory[state->sp - 1] = state->memory[state->pc + 2];
-                state->memory[state->sp - 2] = state->memory[state->pc + 1];
+                state->memory[state->sp - 1] = ((state->pc+3) >> 8) & 0b11111111;
+                state->memory[state->sp - 2] =  (state->pc+3) & 0b11111111;
                 state->sp -= 2;
                 state->pc = ((opcode[2]) << 8) | opcode[1];
                 state->pc--;
@@ -4580,8 +4580,8 @@ int Emulate8080Op(State8080 *state){
         // CP
         case 0xf4:
             if (!(state->cc.s)){
-                state->memory[state->sp - 1] = state->memory[state->pc + 2];
-                state->memory[state->sp - 2] = state->memory[state->pc + 1];
+                state->memory[state->sp - 1] = ((state->pc+3) >> 8) & 0b11111111;
+                state->memory[state->sp - 2] =  (state->pc+3) & 0b11111111;
                 state->sp -= 2;
                 state->pc = ((opcode[2]) << 8) | opcode[1];
                 state->pc--;
@@ -4684,8 +4684,8 @@ int Emulate8080Op(State8080 *state){
         // CM
         case 0xfc: 
             if (state->cc.s){
-                state->memory[state->sp - 1] = state->memory[state->pc + 2];
-                state->memory[state->sp - 2] = state->memory[state->pc + 1];
+                state->memory[state->sp - 1] = ((state->pc+3) >> 8) & 0b11111111;
+                state->memory[state->sp - 2] =  (state->pc+3) & 0b11111111;
                 state->sp -= 2;
                 state->pc = ((opcode[2]) << 8) | opcode[1];
                 state->pc--;
