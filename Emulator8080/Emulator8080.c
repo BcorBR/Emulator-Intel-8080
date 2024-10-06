@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "../Disassembler/disDebug.h"
+#include <ncurses.h>
+#include <time.h>
 
 typedef struct ConditionCodes{
     uint8_t    z:1;
@@ -25,11 +27,51 @@ typedef struct State8080{
     uint8_t    *memory;
     struct    ConditionCodes    cc;
     uint8_t    int_enable;
+
+    // bit shifts
+    uint8_t shiftLSB;
+    uint8_t shiftMSB;
+    uint8_t shift_offset;
+
 } State8080;
 
 int parity(uint8_t b){
     return b^b;
 }
+
+uint8_t MachineIN(State8080 *state, uint8_t port){
+    uint8_t a;
+    switch(port){
+        case 3:{
+            uint16_t v = (state->shiftMSB << 8) | state->shiftLSB;
+            a = ((v >> (8-state->shift_offset)) & 0b11111111);
+        }
+        break;
+    }
+    return a;
+}
+
+void MachineOUT(State8080 *state, uint8_t port, uint8_t value){
+    switch (port){
+        case 2:
+            state->shift_offset = value & 0b111;
+            break;
+        
+        case 4:
+            state->shiftLSB = state->shiftMSB;
+            state->shiftMSB = value;
+            break;
+    }
+}
+
+void GenerateInterrupt(State8080* state, int interrupt_num){
+    state->memory[state->sp - 1] = ((state->pc+1) >> 8) & 0b11111111;
+    state->memory[state->sp - 2] =  (state->pc+1) & 0b11111111;
+    state->sp -= 2;
+    
+    state->pc = 8* interrupt_num;    
+    state->pc--;    
+}  
 
 void UnimplementedInstruction(State8080 *state){
     state->pc--;
@@ -3990,7 +4032,11 @@ int Emulate8080Op(State8080 *state){
 
             break;
         }
-        case 0xc7: UnimplementedInstruction(state); break;
+
+        // RST 0b000
+        case 0xc7:
+            GenerateInterrupt(state, (*opcode >> 3) & 0b111);
+            break;
         
         // RZ Return If Zero
         // Description: If the Zero bit is one, a return operation \
@@ -4096,7 +4142,10 @@ int Emulate8080Op(State8080 *state){
             break;
         }
 
-        case 0xcf: UnimplementedInstruction(state); break;
+        // RST 0b001
+        case 0xcf:
+            GenerateInterrupt(state, (*opcode >> 3) & 0b111);
+            break;
 
         // RNC Return If No Carry
         // Description: If the carry bit is zero, a return operation \
@@ -4137,7 +4186,8 @@ int Emulate8080Op(State8080 *state){
            to output device number expo
         // OUT
         case 0xd3:
-            // NOT YER IMPLEMENTED
+            uint8_t port = opcode[1];
+            MachineOUT(state, port);
             state->pc += 1;
             break;
 
@@ -4206,7 +4256,10 @@ int Emulate8080Op(State8080 *state){
             break;
         }
 
-        case 0xd7: UnimplementedInstruction(state); break;
+        // RST 0b010
+        case 0xd7: 
+            GenerateInterrupt(state, (*opcode >> 3) & 0b111);
+            break;
 
         // RC Return If Carry
         // Description: If the Carry bit is one, a return operation \
@@ -4242,10 +4295,12 @@ int Emulate8080Op(State8080 *state){
            device number exp and replaces the contents of the \
            accumulator.
         // IN
-        case 0xdb:
-            // NOT YET IMPLEMENTED
+        case 0xdb:{
+            uint8_t port = opcode[1];
+            state->a = MachineIN(state, port);
             state->pc += 1;
             break;
+        }
 
         // CC Call If Carry
         // Description: If the Carry bit is one, a call operation is \
@@ -4302,7 +4357,11 @@ int Emulate8080Op(State8080 *state){
             break;
         }
 
-        case 0xdf: UnimplementedInstruction(state); break;
+
+        // RST 0b011
+        case 0xdf:
+            GenerateInterrupt(state, (*opcode >> 3) & 0b111);
+            break;
 
         // RPO Return If Parity Odd
         // Description: If the Parity bit is zero (indicating odd \
@@ -4414,7 +4473,10 @@ int Emulate8080Op(State8080 *state){
 
             break;
 
-        case 0xe7: UnimplementedInstruction(state); break;
+        // RST 0b100
+        case 0xe7:
+            GenerateInterrupt(state, (*opcode >> 3) & 0b111);
+            break;
 
         // RPE Return If Parity Even
         // Description: If the Parity bit is one (indicating even \
@@ -4522,7 +4584,10 @@ int Emulate8080Op(State8080 *state){
 
             break;
 
-        case 0xef: UnimplementedInstruction(state); break;
+        // RST 0b101
+        case 0xef:
+            GenerateInterrupt(state, (*opcode >> 3) & 0b111);
+            break;
 
         // RP Return If Plus
         // Description: If the Sign bit is zero (indicating a posi- \
@@ -4632,7 +4697,10 @@ int Emulate8080Op(State8080 *state){
 
             break;
 
-        case 0xf7: UnimplementedInstruction(state); break;
+        // RST 0b110
+        case 0xf7:
+            GenerateInterrupt(state, (*opcode >> 3) & 0b111);
+            break;
 
         // RM Return If Minus
         // Description: If the Sign bit is one (indicating a minus \
@@ -4730,7 +4798,10 @@ int Emulate8080Op(State8080 *state){
             break;
         }
 
-        case 0xff: UnimplementedInstruction(state); break;
+        // RST 0b111
+        case 0xff:
+            GenerateInterrupt(state, (*opcode >> 3) & 0b111);
+            break;
 
         // if no instruction is found
         default:
@@ -4807,12 +4878,43 @@ int main(int argc, char *argv[]){
         state->memory[i] = buffer[i];
     
     free(buffer);
-    
+
+    /*
+    // starts keyboard event handler
+    initsrc();
+    cbreak();
+    noecho(); 
+    */
+
+    // initializing interrupt time 
+    struct timespec start;
+    clock_gettime(CLOCK_MONOTONIC, &start);
+    long long lastInterrupt = 0;
+
+
     // starting emulator
     state->pc = 0;
-    while (state->pc < fsize){
+    while (state->pc < 65536){
         Disassemble(state->memory, state->pc);
         Emulate8080Op(state);
+
+        // loads screen
+        clock_gettime(CLOCK_MONOTONIC, &start);
+
+        long long curT = (start.tv_sec * 1e9) + start.tv_nsec; // current time
+
+        if ( curT - lastInterrupt > 16666667){  //1/60 second has elapsed    
+            
+            //only do an interrupt if they are enabled    
+            if (state->int_enable){
+                
+                GenerateInterrupt(state, 2);    //interrupt 2    
+
+                // Save the time we did this    
+                clock_gettime(CLOCK_MONOTONIC, &start);
+                lastInterrupt = (start.tv_sec * 1e9) + start.tv_nsec;
+            }    
+        }  
     }
     
     free(state->memory);

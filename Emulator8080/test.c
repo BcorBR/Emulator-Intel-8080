@@ -1,19 +1,19 @@
-#include <stdlib.h>
+#include <time.h>
 #include <stdio.h>
-#include <stdint.h>
 
-int main(){
-    uint16_t a = 0b00000000;
-    uint16_t b = 0b00000001;
+int main() {
     
-    // testes, ~x turns bits correctly
+    struct timespec start;
+    clock_gettime(CLOCK_MONOTONIC, &start);
 
-    if (a == 0b0)
-        printf("YES");
-    else
-        printf("NO");
+    printf("\n%ld\n", start.tv_nsec);
 
-    
-    
+    for (unsigned long int i = 0; i < 4294967295; i ++){
+        i = i;
+    }
+    clock_gettime(CLOCK_MONOTONIC, &start);
+    printf("%ld\n", start.tv_nsec);
+
+
     return 0;
 }
