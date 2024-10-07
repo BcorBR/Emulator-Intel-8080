@@ -2,8 +2,9 @@
 #include <stdio.h>
 #include <stdint.h>
 #include "../Disassembler/disDebug.h"
-#include <ncurses.h>
+#include <SDL2/SDL.h>
 #include <time.h>
+#include <stdbool.h>
 
 typedef struct ConditionCodes{
     uint8_t    z:1;
@@ -37,6 +38,35 @@ typedef struct State8080{
 
 int parity(uint8_t b){
     return b^b;
+}
+
+void render(State8080 *state, bool rendHalf, SDL_Renderer *renderer){
+    // plus will be used to change between upper half and lower half of screen between iterations
+    int plus = 0xf;
+    if (rendHalf)
+        plus = 0x1f;
+
+    // if we are at the lower half of the screen, pixels must be incremented as necessary
+    int Px = 0, Py = 0;
+    if (!rendHalf)
+        Py = 122;
+    // GenerateInterrupt(state, 2);    //interrupt 2    
+    // 256x224
+    for (int y = 0x2400 + plus; y >= (0x2400 + plus) - 0xf; y--){
+        for (int x = y; x <= y + 0x1be0; x += 0x20){
+            // collors pixel green
+            if (state->memory[x])
+                SDL_SetRenderDrawColor(renderer, 0, 255, 251, 255);
+            else
+                SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+            SDL_RenderDrawPoint(renderer, Px, Py);
+            Px++;
+            if (Px == 255)
+                Py++;
+            if (Px == 256)
+                Px = 0;
+        }
+    }
 }
 
 uint8_t MachineIN(State8080 *state, uint8_t port){
@@ -4187,7 +4217,7 @@ int Emulate8080Op(State8080 *state){
         // OUT
         case 0xd3:
             uint8_t port = opcode[1];
-            MachineOUT(state, port);
+            //MachineOUT(state, port);
             state->pc += 1;
             break;
 
@@ -4879,37 +4909,50 @@ int main(int argc, char *argv[]){
     
     free(buffer);
 
-    /*
-    // starts keyboard event handler
-    initsrc();
-    cbreak();
-    noecho(); 
-    */
+
+    // initialize SDL renderer
+    SDL_Window* window = NULL;
+    SDL_Renderer* renderer = NULL;
+
+    if (SDL_Init(SDL_INIT_EVERYTHING) < 0){
+        printf("SDL could not initialize: %s\n", SDL_GetError());
+        exit(1);
+    }
+    if (SDL_CreateWindowAndRenderer(256, 244, 0, &window, &renderer) < 0){
+        printf("WIndow and renderer could not be created: %s\n", SDL_GetError);
+        exit(1);
+    }
+    
+    SDL_SetRenderDrawColor(renderer, 255, 204, 255, 255);
+    
+    // will be used to choose between first and last half of screen
+    // to be rendered
+    int rendHalf = true;
+    
 
     // initializing interrupt time 
     struct timespec start;
     clock_gettime(CLOCK_MONOTONIC, &start);
     long long lastInterrupt = 0;
 
-
     // starting emulator
     state->pc = 0;
     while (state->pc < 65536){
         Disassemble(state->memory, state->pc);
         Emulate8080Op(state);
-
-        // loads screen
+        
+        // current time
         clock_gettime(CLOCK_MONOTONIC, &start);
-
-        long long curT = (start.tv_sec * 1e9) + start.tv_nsec; // current time
+        long long curT = (start.tv_sec * 1e9) + start.tv_nsec; 
 
         if ( curT - lastInterrupt > 16666667){  //1/60 second has elapsed    
             
             //only do an interrupt if they are enabled    
             if (state->int_enable){
+                // loads screen
+                render(state, rendHalf, renderer);
+                rendHalf = ~rendHalf;
                 
-                GenerateInterrupt(state, 2);    //interrupt 2    
-
                 // Save the time we did this    
                 clock_gettime(CLOCK_MONOTONIC, &start);
                 lastInterrupt = (start.tv_sec * 1e9) + start.tv_nsec;
