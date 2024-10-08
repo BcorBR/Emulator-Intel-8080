@@ -41,37 +41,84 @@ int parity(uint8_t b){
 }
 
 void render(State8080 *state, bool rendHalf, SDL_Renderer *renderer){
-    // plus will be used to change between upper half and lower half of screen between iterations
-    int plus = 0xf;
-    if (rendHalf)
-        plus = 0x1f;
-
-    // if we are at the lower half of the screen, pixels must be incremented as necessary
-    int Px = 0, Py = 0;
-    if (!rendHalf)
-        Py = 122;
-    // GenerateInterrupt(state, 2);    //interrupt 2    
-    // 256x224
-    for (int y = 0x2400 + plus; y >= (0x2400 + plus) - 0xf; y--){
-        for (int x = y; x <= y + 0x1be0; x += 0x20){
-            // collors pixel green
-            if (state->memory[x])
-                SDL_SetRenderDrawColor(renderer, 0, 255, 251, 255);
+    int Px = 0, Py = 255;
+    
+    // 224x256
+    // stops at line 96 one p before center p of the screen
+    if (rendHalf){
+        for (int mem = 0x2400; mem <= 0x2fef; mem++){
+            if (state->memory[mem])
+                SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
             else
                 SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+
             SDL_RenderDrawPoint(renderer, Px, Py);
-            Px++;
-            if (Px == 255)
-                Py++;
-            if (Px == 256)
-                Px = 0;
+            SDL_RenderPresent(renderer);
+            Py--;
+            if (Py == -1){
+                Py = 255;
+                Px++;
+            }
+        }
+    }
+    else{
+        Px = 128;
+        for (int mem = 0x2ff0; mem <= 0x3fff; mem++){
+            if (state->memory[mem])
+                SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+            else
+                SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+            
+            SDL_RenderDrawPoint(renderer, Px, Py);
+            SDL_RenderPresent(renderer);
+            Py--;
+            if (Py == -1){
+                Py = 255;
+                Px++;           
+            }
         }
     }
 }
 
 uint8_t MachineIN(State8080 *state, uint8_t port){
-    uint8_t a;
+    uint8_t a = 0b00000000;
+    
     switch(port){
+        case 0:
+            return 1;
+        case 1:
+            // bit 0 = CREDIT (1 if deposidet); bit 2 = 1P start; bit 3 always 1
+            a = 0b00001101;
+            // config keyboard events
+            SDL_Event e;
+            if (SDL_PollEvent(&e)){
+                if (e.type == SDL_KEYDOWN){
+                    switch(e.key.keysym.sym){
+                        case SDLK_LEFT:
+                            a |= 0b00100000;
+                            break;
+                        case SDLK_RIGHT:
+                            a |= 0b01000000;
+                            break;
+                        case SDLK_SPACE:
+                            a |= 0b00010000;
+                            break;
+                    }
+                }
+                else if (e.type == SDL_KEYUP){
+                    switch(e.key.keysym.sym){
+                        case SDLK_LEFT:
+                            a &= 0b11011111;
+                            break;
+                        case SDLK_RIGHT:
+                            a &= 0b10111111;
+                            break;
+                        case SDLK_SPACE:
+                            a &= 0b11101111;
+                            break;
+                    }
+                }
+            }
         case 3:{
             uint16_t v = (state->shiftMSB << 8) | state->shiftLSB;
             a = ((v >> (8-state->shift_offset)) & 0b11111111);
@@ -81,15 +128,15 @@ uint8_t MachineIN(State8080 *state, uint8_t port){
     return a;
 }
 
-void MachineOUT(State8080 *state, uint8_t port, uint8_t value){
+void MachineOUT(State8080 *state, uint8_t port){
     switch (port){
         case 2:
-            state->shift_offset = value & 0b111;
+            state->shift_offset = state->a & 0b111;
             break;
         
         case 4:
             state->shiftLSB = state->shiftMSB;
-            state->shiftMSB = value;
+            state->shiftMSB = state->a;
             break;
     }
 }
@@ -101,7 +148,31 @@ void GenerateInterrupt(State8080* state, int interrupt_num){
     
     state->pc = 8* interrupt_num;    
     state->pc--;    
-}  
+}
+
+void interProtocol(State8080 * state, bool *rendHalf, long long *curT, long long *lastInterrupt, struct timespec *start,SDL_Renderer *renderer){
+    // 1/60 second has elapsed    
+    if (*curT - *lastInterrupt > 16666667){  
+        //only do an interrupt if they are enabled    
+        if (state->int_enable){
+            // different interrupts for different screen loads (upper or lower)
+            if (*rendHalf)
+                GenerateInterrupt(state, 2);
+            else
+                GenerateInterrupt(state, 3);
+
+            // render changes on screen
+            render(state, *rendHalf, renderer);
+
+            // switch between upper and lower half of screen to be rendered
+            *rendHalf = ~(*rendHalf);
+        }    
+    }
+
+    // Save the time we did this    
+    clock_gettime(CLOCK_MONOTONIC, start);
+    *lastInterrupt = ((*start).tv_sec * 1e9) + (*start).tv_nsec;
+}
 
 void UnimplementedInstruction(State8080 *state){
     state->pc--;
@@ -4216,8 +4287,8 @@ int Emulate8080Op(State8080 *state){
            to output device number expo
         // OUT
         case 0xd3:
-            uint8_t port = opcode[1];
-            //MachineOUT(state, port);
+            // opcode[1] = port
+            MachineOUT(state, opcode[1]);
             state->pc += 1;
             break;
 
@@ -4326,8 +4397,8 @@ int Emulate8080Op(State8080 *state){
            accumulator.
         // IN
         case 0xdb:{
-            uint8_t port = opcode[1];
-            state->a = MachineIN(state, port);
+            // opcode[1] = port
+            state->a = MachineIN(state, opcode[1]);
             state->pc += 1;
             break;
         }
@@ -4911,23 +4982,25 @@ int main(int argc, char *argv[]){
 
 
     // initialize SDL renderer
-    SDL_Window* window = NULL;
-    SDL_Renderer* renderer = NULL;
+    SDL_Window *window = NULL;
+    SDL_Renderer *renderer = NULL;
 
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0){
         printf("SDL could not initialize: %s\n", SDL_GetError());
         exit(1);
     }
-    if (SDL_CreateWindowAndRenderer(256, 244, 0, &window, &renderer) < 0){
-        printf("WIndow and renderer could not be created: %s\n", SDL_GetError);
+    if (SDL_CreateWindowAndRenderer(224, 256, 0, &window, &renderer) < 0){
+        printf("WIndow and renderer could not be created: %s\n", SDL_GetError());
         exit(1);
     }
     
     SDL_SetRenderDrawColor(renderer, 255, 204, 255, 255);
-    
+    SDL_RenderClear(renderer);
+    SDL_RenderPresent(renderer);
+
     // will be used to choose between first and last half of screen
-    // to be rendered
-    int rendHalf = true;
+    // to be rendered, 1 = upper screen, 0 = lower screen
+    bool rendHalf = true;
     
 
     // initializing interrupt time 
@@ -4941,23 +5014,12 @@ int main(int argc, char *argv[]){
         Disassemble(state->memory, state->pc);
         Emulate8080Op(state);
         
-        // current time
+        // current time to calculate interrupt timing
         clock_gettime(CLOCK_MONOTONIC, &start);
         long long curT = (start.tv_sec * 1e9) + start.tv_nsec; 
-
-        if ( curT - lastInterrupt > 16666667){  //1/60 second has elapsed    
-            
-            //only do an interrupt if they are enabled    
-            if (state->int_enable){
-                // loads screen
-                render(state, rendHalf, renderer);
-                rendHalf = ~rendHalf;
-                
-                // Save the time we did this    
-                clock_gettime(CLOCK_MONOTONIC, &start);
-                lastInterrupt = (start.tv_sec * 1e9) + start.tv_nsec;
-            }    
-        }  
+        
+        // executes interrupts if timing allows
+        interProtocol(state, &rendHalf, &curT, &lastInterrupt, &start, renderer);          
     }
     
     free(state->memory);
