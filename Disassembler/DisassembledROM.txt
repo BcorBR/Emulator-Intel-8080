@@ -1125,17 +1125,17 @@
 08ec MVI    B,#$20
 08ee JMP    #$14cb
 08f1 MVI    C,#$03
-08f3 LDAX   D
-08f4 PUSH   D
+08f3 LDAX   D "loads content of reg pair DE into reg A"
+08f4 PUSH   D "saves the contents of reg pair DE into sp address"
 08f5 CALL   #$08ff
 08f8 POP    D
 08f9 INX    D
 08fa DCR    C
 08fb JNZ    #$08f3
 08fe RET
-08ff LXI    D,#$1e00
-0902 PUSH   H
-0903 MVI    H,#$00
+08ff LXI    D,#$1e00 "loads $1e00 into reg pair DE"
+0902 PUSH   H        "puts content of reg pair HL into sp addr"
+0903 MVI    H,#$00   
 0905 MOV    L,A
 0906 DAD    H
 0907 DAD    H
@@ -4213,8 +4213,8 @@
 18cd NOP
 18ce CALL   #$08ff
 18d1 JMP    #$0ab6
-18d4 LXI    SP,#$2400
-18d7 MVI    B,#$00
+18d4 LXI    SP,#$2400 "puts the next 2 bytes in the sp register"
+18d7 MVI    B,#$00 "puts $00 into register B"
 18d9 CALL   #$01e6
 18dc CALL   #$1956
 18df MVI    A,#$08
@@ -4247,16 +4247,16 @@
 1917 RC
 1918 INX    H
 1919 RET
-191a MVI    C,#$1c
-191c LXI    H,#$241e
-191f LXI    D,#$1ae4
-1922 JMP    #$08f3
+191a MVI    C,#$1c   "$1c stored in reg C"
+191c LXI    H,#$241e "$241e loaded into HL reg pair"
+191f LXI    D,#$1ae4 "$1ae4 loaded int DE reg pair"
+1922 JMP    #$08f3   "jumps to $08f3 address"
 1925 LXI    H,#$20f8
 1928 JMP    #$1931
 192b LXI    H,#$20fc
 192e JMP    #$1931
 1931 MOV    E,M
-1932 INX    H
+1932 INX    HMVI
 1933 MOV    D,M
 1934 INX    H
 1935 MOV    A,M
@@ -4426,12 +4426,13 @@
 1a59 MOV    H,A
 1a5a POP    B
 1a5b RET
-1a5c LXI    H,#$2400
-1a5f MVI    M,#$00
-1a61 INX    H
-1a62 MOV    A,H
-1a63 CPI    #$40
-1a65 JNZ    #$1a5f
+1a5c LXI    H,#$2400"puts 2400 in HL reg pair"
+1a5f MVI    M,#$00 "puts 0 in current HL memory adress
+		    goes from address 2400 to 4000"
+1a61 INX    H      "increment cur register pair (its a mem addr)"
+1a62 MOV    A,H    "puts byte of H reg to A res"
+1a63 CPI    #$40   "compares $40 value in A reg"
+1a65 JNZ    #$1a5f "will return when HL reg pari value is $4000"
 1a68 RET
 1a69 PUSH    B
 1a6a PUSH   H
