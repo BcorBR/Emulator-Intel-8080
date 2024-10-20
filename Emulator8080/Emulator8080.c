@@ -42,43 +42,55 @@ int parity(uint8_t b){
 }
 
 void render(State8080 *state, bool rendHalf, SDL_Renderer *renderer){
-    int Px = 0, Py = 255;
+    int Px = 0, Py = 0, shift;
+    // used to analyze individual bit
+    int bit;
     
-    // 224x256
+    // 256x224
     // stops at line 96 one px before center px of the screen
     if (rendHalf){
-        for (int mem = 0x2400; mem <= 0x2fef; mem++){
-            if (state->memory[mem])
-                SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-            else
-                SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        for (int mem = 0x2400; mem <= 0x2b7b; mem++){
+            for (shift = 0 ; shift < 8; shift++){
+                //selects bit to be analyzed
+                bit = (state->memory[mem] >> shift) & 0b1;
 
-            SDL_RenderDrawPoint(renderer, Px, Py);
-            SDL_RenderPresent(renderer);
-            Py--;
-            if (Py == -1){
-                Py = 255;
+                if (bit)
+                    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+                else
+                    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+
+                SDL_RenderDrawPoint(renderer, Px, Py);
                 Px++;
+                if (Px == 256){
+                    Px = 0;
+                    Py++;
+                }
             }
         }
     }
     else{
         Px = 128;
-        for (int mem = 0x2ff0; mem <= 0x3fff; mem++){
-            if (state->memory[mem])
-                SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-            else
-                SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-            
-            SDL_RenderDrawPoint(renderer, Px, Py);
-            SDL_RenderPresent(renderer);
-            Py--;
-            if (Py == -1){
-                Py = 255;
-                Px++;           
+        Py = 95;
+        for (int mem = 0x2b7c; mem <= 0x3fff; mem++){
+            for (shift = 0; shift < 8; shift++){
+                //selects bit to be analyzed
+                bit = (state->memory[mem] >> shift) & 0b1;
+
+                if (bit)
+                    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+                else
+                    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+                
+                SDL_RenderDrawPoint(renderer, Px, Py);
+                Px++;
+                if (Px == 256){
+                    Px = 0;
+                    Py++;       
+                }
             }
         }
     }
+    SDL_RenderPresent(renderer);
 }
 
 uint8_t MachineIN(State8080 *state, uint8_t port){
@@ -173,12 +185,12 @@ void interProtocol(State8080 * state, bool *rendHalf, long long *curT, long long
 
         // different interrupts for different screen loads (upper or lower)
         if (*rendHalf)
-            GenerateInterrupt(state, 2);
+            GenerateInterrupt(state, 1);
         else
-            GenerateInterrupt(state, 3);
+            GenerateInterrupt(state, 2);
 
         // switch between upper and lower half of screen to be rendered
-        *rendHalf = ~(*rendHalf);
+        *rendHalf = !(*rendHalf);
         // restart cycle count
         *cycles = 0;
     }    
@@ -338,7 +350,8 @@ int Emulate8080Op(State8080 *state, float *cycles){
             (*cycles) += 4;
             break;
 
-        case 0x08: UnimplementedInstruction(state); break;
+        case 0x08:
+            break;
 
         // DAD Double Add
         // Description: The 16-bit number in the specified regis- \
@@ -471,7 +484,8 @@ int Emulate8080Op(State8080 *state, float *cycles){
             (*cycles) += 4;
             break;
 
-        case 0x10: UnimplementedInstruction(state); break;
+        case 0x10: 
+            break;
         
         // Description: The third byte of the instruction (the \
            most significant 8 bits of the 16-bit immediate data) is \
@@ -601,7 +615,8 @@ int Emulate8080Op(State8080 *state, float *cycles){
             break;
         }
 
-        case 0x18: UnimplementedInstruction(state); break;
+        case 0x18:
+            break;
 
         // DAD Double Add
         // Description: The 16-bit number in the specified regis- \
@@ -733,7 +748,8 @@ int Emulate8080Op(State8080 *state, float *cycles){
             break;
         }
 
-        case 0x20: UnimplementedInstruction(state); break;
+        case 0x20:
+            break;
 
         // Description: The third byte of the instruction (the \
            most significant 8 bits of the 16-bit immediate data) is \
@@ -856,10 +872,46 @@ int Emulate8080Op(State8080 *state, float *cycles){
             (*cycles) += 7;
             break;
         
-        // NOT IMPLEMENTED
-        case 0x27: UnimplementedInstruction(state); break;
+        // DAA
+        // no auxiliary carry instructions implemented
+        case 0x27:{
+            uint16_t tmp;
+            
+            if ((state->a & 0b1111) > 0b1001)
+                state->a += 0b0110;
+            if ((state->a >> 4) & 0b1111 > 0b1001 || state->cc.cy == 1){
+                // soma 0b0110 aos 4 bits mais significativos de A
+                tmp = state->a + (0b0110 << 4);
+            }
+            
+            // carry bit
+            if (tmp > 0b11111111)
+                state->cc.cy = 1;
+            // unaffected if no carry out
+            
+            // zero bit
+            if (tmp & 0b11111111 == 0b0)
+                state->cc.z = 1;
+            else
+                state->cc.z = 0;
+            
+            // sign flag
+            if (tmp & 0b10000000)
+                state->cc.s = 1;
+            else
+                state->cc.s = 0;
 
-        case 0x28: UnimplementedInstruction(state); break;
+            // parity flag
+            state->cc.p = parity(tmp & 0b11111111); 
+            
+            state->a = tmp & 0b11111111;
+            
+            (*cycles) += 4;
+            break;
+        }
+
+        case 0x28:
+            break;
 
         // DAD Double Add
         // Description: The 16-bit number in the specified regis- \
@@ -993,7 +1045,8 @@ int Emulate8080Op(State8080 *state, float *cycles){
             (*cycles) += 4;
             break;
 
-        case 0x30: UnimplementedInstruction(state); break;
+        case 0x30:
+            break;
 
         // Description: The third byte of the instruction (the \
            most significant 8 bits of the 16-bit immediate data) is \
@@ -1117,7 +1170,8 @@ int Emulate8080Op(State8080 *state, float *cycles){
             (*cycles) += 4;
             break;
 
-        case 0x38: UnimplementedInstruction(state); break;
+        case 0x38:
+            break;
 
         // DAD Double Add
         // Description: The 16-bit number in the specified regis- \
@@ -5252,15 +5306,16 @@ int main(int argc, char *argv[]){
         printf("SDL could not initialize: %s\n", SDL_GetError());
         exit(1);
     }
-    if (SDL_CreateWindowAndRenderer(224, 256, 0, &window, &renderer) < 0){
+    if (SDL_CreateWindowAndRenderer(256, 224, 0, &window, &renderer) < 0){
         printf("WIndow and renderer could not be created: %s\n", SDL_GetError());
         exit(1);
     }
     
-    SDL_SetRenderDrawColor(renderer, 255, 204, 255, 255);
+    /*
+    SDL_SetRenderDrawColor(renderer, 255, 204, 255, 0);
     SDL_RenderClear(renderer);
     SDL_RenderPresent(renderer);
-
+    */
     // will be used to choose between first and last half of screen
     // to be rendered, 1 = upper screen, 0 = lower screen
     bool rendHalf = true;
