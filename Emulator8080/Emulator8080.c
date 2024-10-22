@@ -38,7 +38,13 @@ typedef struct State8080{
 } State8080;
 
 int parity(uint8_t b){
-    return b^b;
+    int res = (b >> 7) & 0b1;
+
+    for (int i = 6; i > -1; i--)
+        res = res^((b >> i) & 0b1);
+
+    // 0 even, 1 odd
+    return !res;
 }
 
 void render(State8080 *state, bool rendHalf, SDL_Renderer *renderer){
@@ -206,7 +212,7 @@ void UnimplementedInstruction(State8080 *state){
     exit(EXIT_FAILURE);
 }
 
-int Emulate8080Op(State8080 *state, float *cycles){
+int Emulate8080Op(State8080 *state, float * cycles){
     unsigned char *opcode = &state->memory[state->pc];
     if (opcode == NULL){
         printf("opcode pointer is NULL\n");
@@ -875,7 +881,8 @@ int Emulate8080Op(State8080 *state, float *cycles){
         // DAA
         // no auxiliary carry instructions implemented
         case 0x27:{
-            uint16_t tmp;
+            
+            /*uint16_t tmp;
             
             if ((state->a & 0b1111) > 0b1001)
                 state->a += 0b0110;
@@ -904,7 +911,8 @@ int Emulate8080Op(State8080 *state, float *cycles){
             // parity flag
             state->cc.p = parity(tmp & 0b11111111); 
             
-            state->a = tmp & 0b11111111;
+            state->a = tmp & 0b11111111;*/
+            
             
             (*cycles) += 4;
             break;
@@ -940,8 +948,8 @@ int Emulate8080Op(State8080 *state, float *cycles){
            address replaces the contents of the H register
         // LHLD
         case 0x2a: 
-            state->l = (opcode[2] << 8) | opcode[1];
-            state->h = (opcode[2] << 8) | opcode[1] + 1;
+            state->l = state->memory[(opcode[2] << 8) | opcode[1]];
+            state->h = state->memory[((opcode[2] << 8) | opcode[1]) + 1];
             state->pc += 2;
             (*cycles) += 16;
             break;
@@ -2694,7 +2702,7 @@ int Emulate8080Op(State8080 *state, float *cycles){
             // there will be carry if the result is 0 or negative
             // if there is carry, carry flag is reset
             // if there isn't carry, carry flag is set
-            state->cc.cy = (state->a <= state->b) ? 0 : 1;
+            state->cc.cy = (state->a < state->b) ? 1 : 0;
 
             // parity flag
             state->cc.p = parity(res & 0b11111111);
@@ -2728,7 +2736,7 @@ int Emulate8080Op(State8080 *state, float *cycles){
             // there will be carry if the result is 0 or negative
             // if there is carry, carry flag is reset
             // if there isn't carry, carry flag is set
-            state->cc.cy = (state->a <= state->b) ? 0 : 1;
+            state->cc.cy = (state->a < state->c) ? 1 : 0;
 
             // parity flag
             state->cc.p = parity(res & 0b11111111);
@@ -2762,7 +2770,7 @@ int Emulate8080Op(State8080 *state, float *cycles){
             // there will be carry if the result is 0 or negative
             // if there is carry, carry flag is reset
             // if there isn't carry, carry flag is set
-            state->cc.cy = (state->a <= state->b) ? 0 : 1;
+            state->cc.cy = (state->a < state->d) ? 1 : 0;
 
             // parity flag
             state->cc.p = parity(res & 0b11111111);
@@ -2796,7 +2804,7 @@ int Emulate8080Op(State8080 *state, float *cycles){
             // there will be carry if the result is 0 or negative
             // if there is carry, carry flag is reset
             // if there isn't carry, carry flag is set
-            state->cc.cy = (state->a <= state->b) ? 0 : 1;
+            state->cc.cy = (state->a < state->e) ? 1 : 0;
 
             // parity flag
             state->cc.p = parity(res & 0b11111111);
@@ -2830,7 +2838,7 @@ int Emulate8080Op(State8080 *state, float *cycles){
             // there will be carry if the result is 0 or negative
             // if there is carry, carry flag is reset
             // if there isn't carry, carry flag is set
-            state->cc.cy = (state->a <= state->b) ? 0 : 1;
+            state->cc.cy = (state->a < state->h) ? 1 : 0;
 
             // parity flag
             state->cc.p = parity(res & 0b11111111);
@@ -2864,7 +2872,7 @@ int Emulate8080Op(State8080 *state, float *cycles){
             // there will be carry if the result is 0 or negative
             // if there is carry, carry flag is reset
             // if there isn't carry, carry flag is set
-            state->cc.cy = (state->a <= state->b) ? 0 : 1;
+            state->cc.cy = (state->a < state->l) ? 1 : 0;
 
             // parity flag
             state->cc.p = parity(res & 0b11111111);
@@ -2898,7 +2906,7 @@ int Emulate8080Op(State8080 *state, float *cycles){
             // there will be carry if the result is 0 or negative
             // if there is carry, carry flag is reset
             // if there isn't carry, carry flag is set
-            state->cc.cy = (state->a <= state->b) ? 0 : 1;
+            state->cc.cy = (state->a < state->memory[(state->h << 8) | state->l]) ? 1 : 0;
 
             // parity flag
             state->cc.p = parity(res & 0b11111111);
@@ -2932,7 +2940,7 @@ int Emulate8080Op(State8080 *state, float *cycles){
             // there will be carry if the result is 0 or negative
             // if there is carry, carry flag is reset
             // if there isn't carry, carry flag is set
-            state->cc.cy = (state->a <= state->b) ? 0 : 1;
+            state->cc.cy = 0;
 
             // parity flag
             state->cc.p = parity(res & 0b11111111);
@@ -2969,7 +2977,7 @@ int Emulate8080Op(State8080 *state, float *cycles){
             // there will be carry if the result is 0 or negative
             // if there is carry, carry flag is reset
             // if there isn't carry, carry flag is set
-            state->cc.cy = (state->a <= state->b) ? 0 : 1;
+            state->cc.cy = (state->a < (state->b + state->cc.cy)) ? 1 : 0;
 
             // parity flag
             state->cc.p = parity(res & 0b11111111);
@@ -3006,7 +3014,7 @@ int Emulate8080Op(State8080 *state, float *cycles){
             // there will be carry if the result is 0 or negative
             // if there is carry, carry flag is reset
             // if there isn't carry, carry flag is set
-            state->cc.cy = (state->a <= state->b) ? 0 : 1;
+            state->cc.cy = (state->a < (state->c + state->cc.cy)) ? 1 : 0;
 
             // parity flag
             state->cc.p = parity(res & 0b11111111);
@@ -3043,7 +3051,7 @@ int Emulate8080Op(State8080 *state, float *cycles){
             // there will be carry if the result is 0 or negative
             // if there is carry, carry flag is reset
             // if there isn't carry, carry flag is set
-            state->cc.cy = (state->a <= state->b) ? 0 : 1;
+            state->cc.cy = (state->a < (state->d + state->cc.cy)) ? 1 : 0;
 
             // parity flag
             state->cc.p = parity(res & 0b11111111);
@@ -3080,7 +3088,7 @@ int Emulate8080Op(State8080 *state, float *cycles){
             // there will be carry if the result is 0 or negative
             // if there is carry, carry flag is reset
             // if there isn't carry, carry flag is set
-            state->cc.cy = (state->a <= state->b) ? 0 : 1;
+            state->cc.cy = (state->a < (state->e + state->cc.cy)) ? 1 : 0;
 
             // parity flag
             state->cc.p = parity(res & 0b11111111);
@@ -3117,7 +3125,7 @@ int Emulate8080Op(State8080 *state, float *cycles){
             // there will be carry if the result is 0 or negative
             // if there is carry, carry flag is reset
             // if there isn't carry, carry flag is set
-            state->cc.cy = (state->a <= state->b) ? 0 : 1;
+            state->cc.cy = (state->a < (state->h + state->cc.cy)) ? 1 : 0;
 
             // parity flag
             state->cc.p = parity(res & 0b11111111);
@@ -3154,7 +3162,7 @@ int Emulate8080Op(State8080 *state, float *cycles){
             // there will be carry if the result is 0 or negative
             // if there is carry, carry flag is reset
             // if there isn't carry, carry flag is set
-            state->cc.cy = (state->a <= state->b) ? 0 : 1;
+            state->cc.cy = (state->a < (state->l + state->cc.cy)) ? 1 : 0;
 
             // parity flag
             state->cc.p = parity(res & 0b11111111);
@@ -3191,7 +3199,7 @@ int Emulate8080Op(State8080 *state, float *cycles){
             // there will be carry if the result is 0 or negative
             // if there is carry, carry flag is reset
             // if there isn't carry, carry flag is set
-            state->cc.cy = (state->a <= state->b) ? 0 : 1;
+            state->cc.cy = (state->a < state->memory[(state->h << 8) | state->l] + state->cc.cy) ? 1 : 0;
 
             // parity flag
             state->cc.p = parity(res & 0b11111111);
@@ -3228,7 +3236,7 @@ int Emulate8080Op(State8080 *state, float *cycles){
             // there will be carry if the result is 0 or negative
             // if there is carry, carry flag is reset
             // if there isn't carry, carry flag is set
-            state->cc.cy = (state->a <= state->b) ? 0 : 1;
+            state->cc.cy = (state->a < (state->a + state->cc.cy)) ? 1 : 0;
 
             // parity flag
             state->cc.p = parity(res & 0b11111111);
@@ -3992,7 +4000,7 @@ int Emulate8080Op(State8080 *state, float *cycles){
             // there will be carry if the result is 0 or negative
             // if there is carry, carry flag is reset
             // if there isn't carry, carry flag is set
-            state->cc.cy = (state->a <= state->b) ? 0 : 1;
+            state->cc.cy = (state->a < state->b) ? 1 : 0;
 
             // parity flag
             state->cc.p = parity(res & 0b11111111);
@@ -4033,7 +4041,7 @@ int Emulate8080Op(State8080 *state, float *cycles){
             // there will be carry if the result is 0 or negative
             // if there is carry, carry flag is reset
             // if there isn't carry, carry flag is set
-            state->cc.cy = (state->a <= state->c) ? 0 : 1;
+            state->cc.cy = (state->a < state->c) ? 1 : 0;
 
             // parity flag
             state->cc.p = parity(res & 0b11111111);
@@ -4074,7 +4082,7 @@ int Emulate8080Op(State8080 *state, float *cycles){
             // there will be carry if the result is 0 or negative
             // if there is carry, carry flag is reset
             // if there isn't carry, carry flag is set
-            state->cc.cy = (state->a <= state->d) ? 0 : 1;
+            state->cc.cy = (state->a < state->d) ? 1 : 0;
 
             // parity flag
             state->cc.p = parity(res & 0b11111111);
@@ -4115,7 +4123,7 @@ int Emulate8080Op(State8080 *state, float *cycles){
             // there will be carry if the result is 0 or negative
             // if there is carry, carry flag is reset
             // if there isn't carry, carry flag is set
-            state->cc.cy = (state->a <= state->e) ? 0 : 1;
+            state->cc.cy = (state->a < state->e) ? 1 : 0;
 
             // parity flag
             state->cc.p = parity(res & 0b11111111);
@@ -4156,7 +4164,7 @@ int Emulate8080Op(State8080 *state, float *cycles){
             // there will be carry if the result is 0 or negative
             // if there is carry, carry flag is reset
             // if there isn't carry, carry flag is set
-            state->cc.cy = (state->a <= state->h) ? 0 : 1;
+            state->cc.cy = (state->a < state->h) ? 1 : 0;
 
             // parity flag
             state->cc.p = parity(res & 0b11111111);
@@ -4197,7 +4205,7 @@ int Emulate8080Op(State8080 *state, float *cycles){
             // there will be carry if the result is 0 or negative
             // if there is carry, carry flag is reset
             // if there isn't carry, carry flag is set
-            state->cc.cy = (state->a <= state->l) ? 0 : 1;
+            state->cc.cy = (state->a < state->l) ? 1 : 0;
 
             // parity flag
             state->cc.p = parity(res & 0b11111111);
@@ -4238,7 +4246,7 @@ int Emulate8080Op(State8080 *state, float *cycles){
             // there will be carry if the result is 0 or negative
             // if there is carry, carry flag is reset
             // if there isn't carry, carry flag is set
-            state->cc.cy = (state->a <= state->memory[(state->h << 8) | state->l]) ? 0 : 1;
+            state->cc.cy = (state->a < state->memory[(state->h << 8) | state->l]) ? 1 : 0;
 
             // parity flag
             state->cc.p = parity(res & 0b11111111);
@@ -4279,7 +4287,7 @@ int Emulate8080Op(State8080 *state, float *cycles){
             // there will be carry if the result is 0 or negative
             // if there is carry, carry flag is reset
             // if there isn't carry, carry flag is set
-            state->cc.cy = (state->a <= state->a) ? 0 : 1;
+            state->cc.cy = (state->a < state->a) ? 1 : 0;
 
             // parity flag
             state->cc.p = parity(res & 0b11111111);
@@ -4339,7 +4347,7 @@ int Emulate8080Op(State8080 *state, float *cycles){
            performed to subroutine sub.
         // CNZ
         case 0xc4:
-            if (state->cc.z){
+            if (!state->cc.z){
                 state->memory[state->sp - 1] = ((state->pc+3) >> 8) & 0b11111111;
                 state->memory[state->sp - 2] =  (state->pc+3) & 0b11111111;
                 state->sp -= 2;
@@ -4377,7 +4385,7 @@ int Emulate8080Op(State8080 *state, float *cycles){
                 state->cc.z = 0;
             
             // sign flag
-            if (state->a & 0b10000000)
+            if (res & 0b10000000)
                 state->cc.s = 1;
             else
                 state->cc.s = 0;
@@ -4451,7 +4459,7 @@ int Emulate8080Op(State8080 *state, float *cycles){
            performed to subroutine sub.
         // CZ
         case 0xcc:
-            if (!(state->cc.z)){
+            if (state->cc.z){
                 state->memory[state->sp - 1] = ((state->pc+3) >> 8) & 0b11111111;
                 state->memory[state->sp - 2] =  (state->pc+3) & 0b11111111;
                 state->sp -= 2;
@@ -4474,7 +4482,7 @@ int Emulate8080Op(State8080 *state, float *cycles){
             state->sp -= 2;
             state->pc = (opcode[2] << 8) | opcode[1];
             state->pc--;
-
+            
             (*cycles) += 17;
             break;
 
@@ -4605,7 +4613,7 @@ int Emulate8080Op(State8080 *state, float *cycles){
            Since this is a subtraction operation, the carry bit is \
            set, indicati ng a borrow, if there is no carry out of the high- \
            order bit position, and reset if there is a carry out.
-        // 
+        // SUI
         case 0xd6: {
             uint16_t res = (uint16_t) state->a - (uint16_t) opcode[1];
 
@@ -4616,16 +4624,16 @@ int Emulate8080Op(State8080 *state, float *cycles){
                 state->cc.z = 0;
             
             // sign flag
-            if (state->a & 0b10000000)
+            if (res & 0b10000000)
                 state->cc.s = 1;
             else
                 state->cc.s = 0;
             
             // carry flag
             if (res > 0b11111111)
-                state->cc.cy = 0;
-            else
                 state->cc.cy = 1;
+            else
+                state->cc.cy = 0;
 
             // parity flag
             state->cc.p = parity(res & 0b11111111);
@@ -4730,9 +4738,9 @@ int Emulate8080Op(State8080 *state, float *cycles){
             
             // carry flag
             if (res > 0b11111111)
-                state->cc.cy = 0;
-            else
                 state->cc.cy = 1;
+            else
+                state->cc.cy = 0;
 
             // parity flag
             state->cc.p = parity(res & 0b11111111);
@@ -5201,10 +5209,14 @@ int Emulate8080Op(State8080 *state, float *cycles){
                 state->cc.s = 0;
             
             // carry flag
-            // there will be carry if the result is 0 or negative
-            // if there is carry, carry flag is reset
-            // if there isn't carry, carry flag is set
-            state->cc.cy = (state->a <= opcode[1]) ? 0 : 1;
+            // Since a subtract operation is performed, the Carry bit \
+               will be set if there is no carry out of bit 7, indicating the \
+               immediate data is greater than the contents of the accumu· \
+               lator, and reset otherwise.
+            if (state->a < opcode[1])
+                state->cc.cy = 1;
+            else
+                state->cc.cy = 0;
 
             // parity flag
             state->cc.p = parity(res & 0b11111111);
@@ -5224,6 +5236,8 @@ int Emulate8080Op(State8080 *state, float *cycles){
         // if no instruction is found
         default:
             printf("ERROR. Instruction not found \nstate->pc = %d \n*opcode = %d", state->pc, *opcode);
+            exit(1);
+            break;
     }
     state->pc++;
 }

@@ -44,7 +44,7 @@ void Disassemble(unsigned char *buffer, int pc){
         case 0x1f: printf("RAR"); break;
         case 0x20: printf("NOP"); break;
         case 0x21: printf("LXI    H,#$%02x%02x", code[2], code[1]); break;
-        case 0x22: printf("SHDL   #$%02x%02x", code[2], code[1]); break;
+        case 0x22: printf("SHLD   #$%02x%02x", code[2], code[1]); break;
         case 0x23: printf("INX    H"); break;
         case 0x24: printf("INR    H"); break;
         case 0x25: printf("DCR    H"); break;
@@ -254,7 +254,7 @@ void Disassemble(unsigned char *buffer, int pc){
         case 0xf1: printf("POP    PSW"); break;
         case 0xf2: printf("JP     #$%02x%02x", code[2], code[1]); break;
         case 0xf3: printf("DI"); break;
-        case 0xf4: printf("CP     #$%02x%02x"); break;
+        case 0xf4: printf("CP     #$%02x%02x", code[2], code[1]); break;
         case 0xf5: printf("PUSH   PSW"); break;
         case 0xf6: printf("ORI    #$%02x", code[1]); break;
         case 0xf7: printf("RST    6"); break;
