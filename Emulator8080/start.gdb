@@ -1,3 +1,2 @@
-file Emulator8080
-break 5017
-run ../InvadersROM/invadersROM
+break 5400
+run tests/8080PRE.COM

@@ -4,7 +4,10 @@
 #include <SDL2/SDL.h>
 #include <time.h>
 #include <stdbool.h>
+#include <string.h>
 
+
+#include "./emugit/processor.h"
 #include "../Disassembler/disDebug.h"
 
 typedef struct ConditionCodes{
@@ -37,6 +40,74 @@ typedef struct State8080{
 
 } State8080;
 
+bool compareRes(unsigned char *bufferEmu, unsigned char *bufferState){
+    for (int i = 0; i < 198; i++){
+        if (bufferEmu[i] != bufferState[i]){
+            printf("there is a difference in conditions, exiting\n");
+            printf("bufferEmu -1i1: %c%c%c, i: %d\n", bufferEmu[i-1], bufferEmu[i], bufferEmu[i+1], i);
+            printf("bufferState -1i1: %c%c%c, i: %d\n", bufferState[i-1], bufferState[i], bufferState[i+1], i);
+            exit(0);
+        }
+    }
+}
+
+void printConditionsState(State8080 *state, unsigned char *buf){
+    printf("STATE:\n");
+    sprintf(buf, "REGISTERS\n");
+    char temp[50];
+
+    sprintf(temp, "reg a: $%04x\n", state->a);  
+    strcat(buf, temp);
+    sprintf(temp, "reg b: $%04x\n", state->b);
+    strcat(buf, temp);
+    sprintf(temp, "reg c: $%04x\n", state->c);
+    strcat(buf, temp);
+    sprintf(temp, "reg d: $%04x\n", state->d);
+    strcat(buf, temp);
+    sprintf(temp, "reg e: $%04x\n", state->e);
+    strcat(buf, temp);
+    strcat(buf, temp);
+    sprintf(temp, "reg h: $%04x\n", state->h);
+    strcat(buf, temp);
+    sprintf(temp, "reg l: $%04x\n", state->l);
+    strcat(buf, temp);
+    sprintf(temp, "CONDITION FLAGS\n");
+    strcat(buf, temp);
+    sprintf(temp, "zf: $%04x\n", state->cc.z);
+    strcat(buf, temp);
+    sprintf(temp, "sf: $%04x\n", state->cc.s);
+    strcat(buf, temp);
+    sprintf(temp, "cf: $%04x\n", state->cc.cy);
+    strcat(buf, temp);
+    sprintf(temp, "pf: $%04x\n", state->cc.p);
+    strcat(buf, temp);
+    sprintf(temp, "POINTERS\n");
+    strcat(buf, temp);
+    sprintf(temp, "sp: $%04x\n", state->sp);
+    strcat(buf, temp);
+    sprintf(temp, "pc: $%04x\n", state->pc);
+    strcat(buf, temp);
+        
+    printf("REGISTERS\n");
+    printf("reg a: $%04x\n", state->a);  
+    printf("reg b: $%04x\n", state->b);
+    printf("reg c: $%04x\n", state->c);
+    printf("reg d: $%04x\n", state->d);
+    printf("reg e: $%04x\n", state->e);
+    printf("reg h: $%04x\n", state->h);
+    printf("reg l: $%04x\n", state->l);
+    printf("CONDITION FLAGS\n");
+    printf("zf: $%04x\n", state->cc.z);
+    printf("sf: $%04x\n", state->cc.s);
+    printf("cf: $%04x\n", state->cc.cy);
+    printf("pf: $%04x\n", state->cc.p);
+    printf("POINTERS\n");
+    printf("sp: $%04x\n", state->sp);
+    printf("pc: $%04x\n", state->pc);
+    puts("");
+}
+
+
 int parity(uint8_t b){
     int res = (b >> 7) & 0b1;
 
@@ -54,7 +125,7 @@ void render(State8080 *state, bool rendHalf, SDL_Renderer *renderer){
     // 256x224
     // stops at line 96 one px before center px of the screen
     if (rendHalf){
-        for (int mem = 0x2400; mem <= 0x2b7b; mem++){
+        for (int mem = 0x2000; mem <= 0x2b7b; mem++){
             for (shift = 0 ; shift < 8; shift++){
                 //selects bit to be analyzed
                 bit = (state->memory[mem] >> shift) & 0b1;
@@ -634,7 +705,7 @@ int Emulate8080Op(State8080 *state, float * cycles){
             state->h = (tmp >> 8)  & 0b11111111;
             state->l = tmp & 0b11111111;
 
-            if (tmp & 0b100000000)
+            if (tmp > 0xffff)
                 state->cc.cy = 1;
             else 
                 state->cc.cy = 0;
@@ -1191,7 +1262,7 @@ int Emulate8080Op(State8080 *state, float * cycles){
             state->h = (tmp >> 8) & 0b11111111;
             state->l = tmp & 0b11111111;
 
-            if (tmp & 0b100000000)
+            if (tmp > 0xffff)
                 state->cc.cy = 1;
             else
                 state->cc.cy = 0;
@@ -4478,36 +4549,11 @@ int Emulate8080Op(State8080 *state, float * cycles){
            formed to subroutine sub.
         // CALL
         case 0xcd:{
-            if (5 ==  ((opcode[2] << 8) | opcode[1]))    
-            {    
-                if (state->c == 9)    
-                {    
-                    uint16_t offset = (state->d<<8) | (state->e);    
-                    char *str = &state->memory[offset+3];  //skip the prefix bytes    
-                    while (*str != '$')    
-                        printf("%c", *str++);    
-                    printf("\n");    
-                    state->pc += 2;
-                }    
-                else if (state->c == 2)    
-                {    
-                    //saw this in the inspected code, never saw it called    
-                    printf ("print char routine called\n");    
-                    state->pc += 2;
-                }    
-            }    
-            else if (0 ==  ((opcode[2] << 8) | opcode[1]))    
-            {  
-                printf("test has finished\n");  
-                exit(0);    
-            }    
-            else{
             state->memory[state->sp - 1] = ((state->pc+3) >> 8) & 0b11111111;
             state->memory[state->sp - 2] =  (state->pc+3) & 0b11111111;
             state->sp -= 2;
             state->pc = (opcode[2] << 8) | opcode[1];
             state->pc--;
-            }
 
 
             (*cycles) += 17;
@@ -4529,7 +4575,7 @@ int Emulate8080Op(State8080 *state, float * cycles){
                 state->cc.z = 0;
             
             // sign flag
-            if (state->a & 0b10000000)
+            if (res & 0b10000000)
                 state->cc.s = 1;
             else
                 state->cc.s = 0;
@@ -5270,6 +5316,7 @@ int Emulate8080Op(State8080 *state, float * cycles){
     state->pc++;
 }
 
+
 int main(int argc, char *argv[]){
     if (argc < 2){
         printf("ROM file is missing\n");
@@ -5299,6 +5346,15 @@ int main(int argc, char *argv[]){
     fread(buffer, fsize, 1, f);
     fclose(f);
 
+    // initializes other emulator
+    emu8080 *emu = (emu8080 *)malloc(sizeof(emu8080));
+    if (emu == NULL){
+        printf("error, emu has not initialized properly\n");
+        exit(1);
+    }
+    emu->memory = (uint8_t *)malloc(65536);
+    
+
     // allocating memory for the emulator's state
     State8080 *state = (State8080 *)malloc(sizeof(State8080));
     if (state == NULL){
@@ -5307,6 +5363,9 @@ int main(int argc, char *argv[]){
         free(buffer);
         exit(1);
     }
+    // writing ROM into other emu memory
+    for (int i = 0; i < fsize; i ++)
+        emu->memory[i + 0x100] = buffer[i];
 
     // allocating memory for emulator, 16 kb
     state->memory = (uint8_t *)malloc(65536);
@@ -5333,33 +5392,59 @@ int main(int argc, char *argv[]){
     state->l = 0;
     state->sp = 0;
 
+    // initializing emu hardware
+    emu->a = 0;
+    emu->b = 0;
+    emu->c = 0;
+    emu->d = 0;
+    emu->e = 0;
+    emu->h = 0;
+    emu->l = 0;
+    emu->sp = 0;
+    emu->pc = 0;
+    emu->cc.ac= 0;
+    emu->cc.cy = 0;
+    emu->cc.p = 0;
+    emu->cc.s = 0;
+    emu->cc.z = 0;
+
     // writing ROM into memory
     for (int i = 0; i < fsize; i ++)
         state->memory[i + 0x100] = buffer[i];
     
     free(buffer);
 
-    //Fix the first instruction to be JMP 0x100    
-    state->memory[0]=0xc3;    
-    state->memory[1]=0x00;    
-    state->memory[2]=0x01;    
+    // some other initialization steps
+    // we need the first thing to happen be jumping to the code at 0x100
+    emu->memory[0] = 0xc3; // JMP
+    emu->memory[1] = 0;    // 0x0100
+    emu->memory[2] = 0x01;
 
-    //Fix the stack pointer from 0x6ad to 0x7ad    
-    // this 0x06 byte 112 in the code, which is    
-    // byte 112 + 0x100 = 368 in memory    
-    //state->memory[368] = 0x7;    
+    // fix the stack pointer from 0x6ad to 0x7ad
+    // this 0x06 byte 112 in the code - which is
+    // byte 112 + 0x100 = 368 in memory
+    emu->memory[368] = 0x7;
 
-    //Skip DAA test    
-    //state->memory[0x5b3] = 0xc3; // JMP
-    //state->memory[0x5b4] = 0xd9; // LO ADDRESS
-    //state->memory[0x5b5] = 0x5; // HI ADDRESS
+    // skip DAA test
+    emu->memory[0x59c] = 0xc3; // JMP
+    emu->memory[0x59d] = 0xc2;
+    emu->memory[0x59e] = 0x05;
 
-    // fix sp
-    state->sp = 0;
-    state->memory[0x116] = 0x3b;
+    // some other initialization steps
+    // we need the first thing to happen be jumping to the code at 0x100
+    state->memory[0] = 0xc3; // JMP
+    state->memory[1] = 0;    // 0x0100
+    state->memory[2] = 0x01;
 
-    // add 0xaa to address 0xde2 for STAX and LDAX test, maybe others
-    //state->memory[0xde02] = 0xaa;
+    // fix the stack pointer from 0x6ad to 0x7ad
+    // this 0x06 byte 112 in the code - which is
+    // byte 112 + 0x100 = 368 in memory
+    state->memory[368] = 0x7;
+
+    // skip DAA test
+    state->memory[0x59c] = 0xc3; // JMP
+    state->memory[0x59d] = 0xc2;
+    state->memory[0x59e] = 0x05;
 
     // limit program speed
     struct timespec limit;
@@ -5370,9 +5455,43 @@ int main(int argc, char *argv[]){
     // starting emulator
     float cycles = 0;
     state->pc = 0;
+    emu->pc = 0;
     while (state->pc < 65536){
+
+        // buffer for state comparison
+        unsigned char *bufferEmu = (unsigned char *)malloc(sizeof(unsigned char) *198);
+        unsigned char *bufferState = (unsigned char *)malloc(sizeof(unsigned char) *198);
+
+        // test emu
+        Disassemble(emu->memory, emu->pc);
+        emulate_i8080(emu, &cycles);
+        printConditionsEmu(emu, bufferEmu);
+        
+
+        if (emu->pc == 0x689){
+            printf("something went wrong, exiting\n");
+            exit(1);
+        }
+
+
+        // my emu
         Disassemble(state->memory, state->pc);
         Emulate8080Op(state, &cycles);
+        printConditionsState(state, bufferState);
+        
+        if (state->pc == 0x689){
+            printf("something went wrong, exiting\n");
+            exit(1);
+        }
+
+        // compares both outputs
+        compareRes(bufferEmu, bufferState);
+
+        // resets buffer
+        free(bufferEmu);
+        free(bufferState);
+
+
 /*
         // instruction flow controll
         while (curT - lastT < 200000000){
@@ -5382,10 +5501,6 @@ int main(int argc, char *argv[]){
         lastT = (limit.tv_sec * 1e9) + limit.tv_nsec;
 */
         // error handling adress
-        if (state->pc == 0){
-            printf("something went wrong, exiting\n");
-            exit(1);
-        }
         
 
         /*

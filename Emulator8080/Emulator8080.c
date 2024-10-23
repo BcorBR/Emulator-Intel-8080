@@ -635,7 +635,7 @@ int Emulate8080Op(State8080 *state, float * cycles){
             state->h = (tmp >> 8)  & 0b11111111;
             state->l = tmp & 0b11111111;
 
-            if (tmp & 0b100000000)
+            if (tmp > 0xffff)
                 state->cc.cy = 1;
             else 
                 state->cc.cy = 0;
@@ -1192,7 +1192,7 @@ int Emulate8080Op(State8080 *state, float * cycles){
             state->h = (tmp >> 8) & 0b11111111;
             state->l = tmp & 0b11111111;
 
-            if (tmp & 0b100000000)
+            if (tmp > 0xffff)
                 state->cc.cy = 1;
             else
                 state->cc.cy = 0;
@@ -1220,6 +1220,8 @@ int Emulate8080Op(State8080 *state, float * cycles){
             state->sp--;
             (*cycles) += 5;
             break;
+
+        
 
         // INR Increment Register or Memory
         // Description: The specified register or memory byte is \
@@ -4476,15 +4478,17 @@ int Emulate8080Op(State8080 *state, float * cycles){
         // Description: A call operation is unconditionally per- \
            formed to subroutine sub.
         // CALL
-        case 0xcd:
+        case 0xcd:{
             state->memory[state->sp - 1] = ((state->pc+3) >> 8) & 0b11111111;
             state->memory[state->sp - 2] =  (state->pc+3) & 0b11111111;
             state->sp -= 2;
             state->pc = (opcode[2] << 8) | opcode[1];
             state->pc--;
-            
+
+
             (*cycles) += 17;
             break;
+        }
 
         // ACI Add Immediate To Accumulator With Carry
         // Description: The byte of immediate data is added to \
@@ -4501,7 +4505,7 @@ int Emulate8080Op(State8080 *state, float * cycles){
                 state->cc.z = 0;
             
             // sign flag
-            if (state->a & 0b10000000)
+            if (res & 0b10000000)
                 state->cc.s = 1;
             else
                 state->cc.s = 0;
