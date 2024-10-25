@@ -1,42 +1,43 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <SDL2/SDL.h>
-#include <time.h>
-#include <stdbool.h>
+#include "../processor/processor.h"
+#include "../IO/IO.h"
+#include "../interrupt/interrupt.h"
 
-#include "../Disassembler/disDebug.h"
+State8080 *init8080(){
+    // allocating memory for the emulator's state
+    State8080 *state = (State8080 *)malloc(sizeof(State8080));
+    if (state == NULL){
+        printf("state has not initialized properly\n");
+        exit(1);
+    }
 
-typedef struct ConditionCodes{
-    uint8_t    z:1;
-    uint8_t    s:1;
-    uint8_t    p:1;
-    uint8_t    cy:1;
-    uint8_t    ac:1;
-    uint8_t    pad:3; 
-} ConditionCodes;
+    // allocating memory for emulator, 64 kb
+    state->memory = (uint8_t *)malloc(65536);
+    if (state->memory == NULL){
+        printf("Error allocating emulator's memory\n");
+        exit(1);
+    }
 
-typedef struct State8080{
-    uint8_t    a;
-    uint8_t    b;
-    uint8_t    c;
-    uint8_t    d;
-    uint8_t    e;
-    uint8_t    h;
-    uint8_t    l;
-    uint16_t    sp;
-    uint16_t    pc;
-    uint8_t    *memory;
-    struct    ConditionCodes    cc;
-    uint8_t    int_enable;
+    // initizlizing emulated hardware and condition flags
+    state->cc.z = 0;  
+    state->cc.s = 0;  
+    state->cc.p = 0;  
+    state->cc.cy = 0; 
+    state->cc.ac = 0; 
+    state->cc.pad = 0;
+    state->a = 0;
+    state->b = 0;
+    state->c = 0;
+    state->d = 0;
+    state->e = 0;
+    state->h = 0;
+    state->l = 0;
+    state->sp = 0;
+    state->int_enable = 1;
 
-    // bit shifts
-    uint8_t shiftLSB;
-    uint8_t shiftMSB;
-    uint8_t shift_offset;
+    return state;
+}
 
-} State8080;
-
+// XORs each bit
 int parity(uint8_t b){
     int res = (b >> 7) & 0b1;
 
@@ -47,167 +48,7 @@ int parity(uint8_t b){
     return !res;
 }
 
-void render(State8080 *state, bool rendHalf, SDL_Renderer *renderer){
-    int Px = 0, Py = 0, shift;
-    // used to analyze individual bit
-    int bit;
-    
-    // 256x224
-    // stops at line 96 one px before center px of the screen
-    if (rendHalf){
-        for (int mem = 0x2400; mem <= 0x2b7b; mem++){
-            for (shift = 0 ; shift < 8; shift++){
-                //selects bit to be analyzed
-                bit = (state->memory[mem] >> shift) & 0b1;
-
-                if (bit)
-                    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-                else
-                    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-
-                SDL_RenderDrawPoint(renderer, Px, Py);
-                Px++;
-                if (Px == 256){
-                    Px = 0;
-                    Py++;
-                }
-            }
-        }
-    }
-    else{
-        Px = 128;
-        Py = 95;
-        for (int mem = 0x2b7c; mem <= 0x3fff; mem++){
-            for (shift = 0; shift < 8; shift++){
-                //selects bit to be analyzed
-                bit = (state->memory[mem] >> shift) & 0b1;
-
-                if (bit)
-                    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-                else
-                    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-                
-                SDL_RenderDrawPoint(renderer, Px, Py);
-                Px++;
-                if (Px == 256){
-                    Px = 0;
-                    Py++;       
-                }
-            }
-        }
-    }
-    SDL_RenderPresent(renderer);
-}
-
-uint8_t MachineIN(State8080 *state, uint8_t port){
-    uint8_t a = 0b00000000;
-    
-    switch(port){
-        case 0:
-            return 1;
-        case 1:
-            // bit 0 = CREDIT (1 if deposited); bit 2 = 1P start; bit 3 always 1
-            a = 0b00001101;
-            // config keyboard events
-            SDL_Event e;
-            if (SDL_PollEvent(&e)){
-                if (e.type == SDL_KEYDOWN){
-                    switch(e.key.keysym.sym){
-                        case SDLK_LEFT:
-                            a |= 0b00100000;
-                            break;
-                        case SDLK_RIGHT:
-                            a |= 0b01000000;
-                            break;
-                        case SDLK_SPACE:
-                            a |= 0b00010000;
-                            break;
-                    }
-                }
-                else if (e.type == SDL_KEYUP){
-                    switch(e.key.keysym.sym){
-                        case SDLK_LEFT:
-                            a &= 0b11011111;
-                            break;
-                        case SDLK_RIGHT:
-                            a &= 0b10111111;
-                            break;
-                        case SDLK_SPACE:
-                            a &= 0b11101111;
-                            break;
-                    }
-                }
-            }
-            break;
-
-        case 2:
-            return 0;
-
-        case 3:{
-            uint16_t v = (state->shiftMSB << 8) | state->shiftLSB;
-            a = ((v >> (8-state->shift_offset)) & 0b11111111);
-        }
-        break;
-    }
-    return a;
-}
-
-void MachineOUT(State8080 *state, uint8_t port){
-    switch (port){
-        case 2:
-            state->shift_offset = state->a & 0b111;
-            break;
-        
-        case 4:
-            state->shiftLSB = state->shiftMSB;
-            state->shiftMSB = state->a;
-            break;
-    }
-}
-
-void GenerateInterrupt(State8080* state, int interrupt_num){
-    state->memory[state->sp - 1] = ((state->pc+1) >> 8) & 0b11111111;
-    state->memory[state->sp - 2] =  (state->pc+1) & 0b11111111;
-    state->sp -= 2;
-    
-    state->pc = 8* interrupt_num;    
-    state->pc--;    
-}
-
-// CPU clock rate = 2MHz; 1 clock per 500 ns; 1 frame per 16666667 ns; half frame per 8333334 ns
-// time per frames rendered / CPU time per clock = (16666667 ns) / (500 ns) = 33334 cycles;  divider by 2 = 16667 cycles per half frame
-void interProtocol(State8080 * state, bool *rendHalf, long long *curT, long long *lastInterrupt, struct timespec *start,SDL_Renderer *renderer, float *cycles){
-    
-    // if not enough time for interrupt, wait
-    while(*curT - *lastInterrupt < 8333334){
-        clock_gettime(CLOCK_MONOTONIC, start);
-        *curT = ((*start).tv_sec * 1e9) + (*start).tv_nsec;
-    }
-    
-    //only do an interrupt if they are enabled    
-    if (state->int_enable){
-        // render changes on screen
-        render(state, *rendHalf, renderer);
-
-        // different interrupts for different screen loads (upper or lower)
-        if (*rendHalf)
-            GenerateInterrupt(state, 1);
-        else
-            GenerateInterrupt(state, 2);
-
-        // switch between upper and lower half of screen to be rendered
-        *rendHalf = !(*rendHalf);
-        // restart cycle count
-        *cycles = 0;
-    }    
-
-    // Save the time we did this    
-    clock_gettime(CLOCK_MONOTONIC, start);
-    *lastInterrupt = ((*start).tv_sec * 1e9) + (*start).tv_nsec;
-}
-
 void UnimplementedInstruction(State8080 *state){
-    state->pc--;
     printf("Error: instruction not implemented\n");
     exit(EXIT_FAILURE);
 }
@@ -5244,124 +5085,4 @@ int Emulate8080Op(State8080 *state, float * cycles){
             break;
     }
     state->pc++;
-}
-
-int main(int argc, char *argv[]){
-    if (argc < 2){
-        printf("ROM file is missing\n");
-        exit(1);
-    }
-
-    FILE *f;
-    f = fopen(argv[1], "rb");
-    if (f == NULL){
-        printf("Error opening file");
-        exit(EXIT_FAILURE);
-    }    
-
-    // find file size and put it into buffer
-    fseek(f, 0L, SEEK_END);
-    int fsize = ftell(f);
-    fseek(f, 0L, SEEK_SET);
-
-    // allocating memory for information to be stored from file
-    unsigned char *buffer = (unsigned char *)malloc(fsize);
-    if (buffer == NULL){
-        printf("Error alocating buffer");
-        fclose(f);
-        exit(1);
-    }
-
-    fread(buffer, fsize, 1, f);
-    fclose(f);
-
-    // allocating memory for the emulator's state
-    State8080 *state = (State8080 *)malloc(sizeof(State8080));
-    if (state == NULL){
-        printf("state has not initialized properly\n");
-        free(state);
-        free(buffer);
-        exit(1);
-    }
-
-    // allocating memory for emulator, 64 kb
-    state->memory = (uint8_t *)malloc(65536);
-    if (state->memory == NULL){
-        printf("Error allocating emulator's memory\n");
-        free(state);
-        free(buffer);
-        exit(1);
-    }
-
-    // initizlizing emulated hardware and condition flags
-    state->cc.z = 0;  
-    state->cc.s = 0;  
-    state->cc.p = 0;  
-    state->cc.cy = 0; 
-    state->cc.ac = 0; 
-    state->cc.pad = 0;
-    state->a = 0;
-    state->b = 0;
-    state->c = 0;
-    state->d = 0;
-    state->e = 0;
-    state->h = 0;
-    state->l = 0;
-    state->sp = 0;
-
-    // writing ROM into memory
-    for (int i = 0; i < fsize; i ++)
-        state->memory[i] = buffer[i];
-    
-    free(buffer);
-
-
-    // initialize SDL renderer
-    SDL_Window *window = NULL;
-    SDL_Renderer *renderer = NULL;
-
-    if (SDL_Init(SDL_INIT_EVERYTHING) < 0){
-        printf("SDL could not initialize: %s\n", SDL_GetError());
-        exit(1);
-    }
-    if (SDL_CreateWindowAndRenderer(256, 224, 0, &window, &renderer) < 0){
-        printf("WIndow and renderer could not be created: %s\n", SDL_GetError());
-        exit(1);
-    }
-    
-    /*
-    SDL_SetRenderDrawColor(renderer, 255, 204, 255, 0);
-    SDL_RenderClear(renderer);
-    SDL_RenderPresent(renderer);
-    */
-    // will be used to choose between first and last half of screen
-    // to be rendered, 1 = upper screen, 0 = lower screen
-    bool rendHalf = true;
-    
-
-    // initializing interrupt time 
-    struct timespec start;
-    clock_gettime(CLOCK_MONOTONIC, &start);
-    long long lastInterrupt = 0;
-
-    // starting emulator
-    float cycles = 0;
-    state->pc = 0;
-    while (state->pc < 65536){
-        Disassemble(state->memory, state->pc);
-        Emulate8080Op(state, &cycles);
-        
-        // current time to calculate interrupt timing
-        clock_gettime(CLOCK_MONOTONIC, &start);
-        long long curT = (start.tv_sec * 1e9) + start.tv_nsec; 
-        
-        // executes interrupts if timing allows
-        if (cycles >= 16667)
-            interProtocol(state, &rendHalf, &curT, &lastInterrupt, &start, renderer, &cycles);          
-    }
-    
-    free(state->memory);
-    free(state);
-
-    return 0;
 }
