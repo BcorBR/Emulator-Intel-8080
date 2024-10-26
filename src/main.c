@@ -24,7 +24,7 @@ int main(int argc, char *argv[]){
         printf("SDL could not initialize: %s\n", SDL_GetError());
         exit(1);
     }
-    if (SDL_CreateWindowAndRenderer(256, 224, 0, &window, &renderer) < 0){
+    if (SDL_CreateWindowAndRenderer(224, 256, 0, &window, &renderer) < 0){
         printf("WIndow and renderer could not be created: %s\n", SDL_GetError());
         exit(1);
     }
