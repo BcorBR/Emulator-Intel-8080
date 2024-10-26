@@ -53,7 +53,10 @@ int main(int argc, char *argv[]){
         if (cycles >= 16667)
             interProtocol(state, &rendHalf, &curT, &lastInterrupt, &start, renderer, &cycles);          
     }
-    
+
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+
     free(state->memory);
     free(state);
 
