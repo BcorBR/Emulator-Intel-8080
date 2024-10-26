@@ -13,7 +13,7 @@ void Disassemble(unsigned char *buffer, int pc){
         case 0x00: printf("NOP"); break;
         case 0x01: printf("LXI    B,#$%02x%02x", code[2], code[1]); break;
         case 0x02: printf("STAX   B"); break;
-        case 0x03: printf("INX    B"); break;
+        case 0x03: printf("INX    BC"); break;
         case 0x04: printf("INR    B"); break;
         case 0x05: printf("DCR    B"); break;
         case 0x06: printf("MVI    B,#$%02x", code[1]); break;
@@ -29,7 +29,7 @@ void Disassemble(unsigned char *buffer, int pc){
         case 0x10: printf("NOP"); break;
         case 0x11: printf("LXI    D,#$%02x%02x", code[2], code[1]); break;
         case 0x12: printf("STAX   D"); break;
-        case 0x13: printf("INX    D"); break;
+        case 0x13: printf("INX    DE"); break;
         case 0x14: printf("INR    D"); break;
         case 0x15: printf("DCR    D"); break;
         case 0x16: printf("MVI    D,#$%02x", code[1]); break;
@@ -45,7 +45,7 @@ void Disassemble(unsigned char *buffer, int pc){
         case 0x20: printf("NOP"); break;
         case 0x21: printf("LXI    H,#$%02x%02x", code[2], code[1]); break;
         case 0x22: printf("SHLD   #$%02x%02x", code[2], code[1]); break;
-        case 0x23: printf("INX    H"); break;
+        case 0x23: printf("INX    HL"); break;
         case 0x24: printf("INR    H"); break;
         case 0x25: printf("DCR    H"); break;
         case 0x26: printf("MVI    H,#$%02x", code[1]); break;

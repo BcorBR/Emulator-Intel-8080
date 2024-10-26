@@ -24,8 +24,6 @@ void interProtocol(State8080 * state, bool *rendHalf, long long *curT, long long
         *curT = ((*start).tv_sec * 1e9) + (*start).tv_nsec;
     }
     
-    // renders screen
-    render(state, *rendHalf, renderer);
     
     // only do an interrupt if they are enabled    
     if (state->int_enable){
@@ -34,12 +32,15 @@ void interProtocol(State8080 * state, bool *rendHalf, long long *curT, long long
             GenerateInterrupt(state, 1);
         else
             GenerateInterrupt(state, 2);
+        
+        // renders screen
+        render(state, *rendHalf, renderer);
+        // switch between upper and lower half of screen to be rendered
+        *rendHalf = !(*rendHalf);
+        // restart cycle count
+        *cycles = 0;
     }    
     
-    // switch between upper and lower half of screen to be rendered
-    *rendHalf = !(*rendHalf);
-    // restart cycle count
-    *cycles = 0;
 
     // Save the time we did this    
     clock_gettime(CLOCK_MONOTONIC, start);
